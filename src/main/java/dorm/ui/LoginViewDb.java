@@ -12,6 +12,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -19,6 +20,10 @@ import javafx.util.StringConverter;
 
 import java.util.Optional;
 
+/**
+ * Login and Registration view.
+ * Supports Enter key for form submission.
+ */
 public class LoginViewDb {
     private final DatabaseDormService service;
     private final Stage stage;
@@ -48,15 +53,22 @@ public class LoginViewDb {
 
         TextField usernameField = new TextField();
         usernameField.setPromptText("Student ID (e.g., UGR/1234/16)");
+        usernameField.setPrefWidth(250);
+        
         PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Enter password");
+        passwordField.setPrefWidth(250);
+        
         Button loginButton = new Button("Login");
+        loginButton.setStyle("-fx-font-weight: bold; -fx-padding: 8 20;");
 
         Label usernameLabel = new Label("Username / Student ID");
         form.addRow(0, usernameLabel, usernameField);
         form.addRow(1, new Label("Password"), passwordField);
         form.add(loginButton, 1, 2);
 
-        loginButton.setOnAction(event -> {
+        // Login action - extracted so Enter key can use it
+        Runnable doLogin = () -> {
             String username = usernameField.getText().trim();
             String password = passwordField.getText().trim();
             
@@ -72,10 +84,29 @@ public class LoginViewDb {
             }
             
             switchToDashboard(authResult.get());
+        };
+
+        loginButton.setOnAction(event -> doLogin.run());
+        
+        // Enter key support
+        usernameField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                passwordField.requestFocus();
+            }
+        });
+        passwordField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                doLogin.run();
+            }
         });
 
-        VBox wrapper = new VBox(form);
+        // Header
+        Label headerLabel = new Label("Welcome");
+        headerLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+        
+        VBox wrapper = new VBox(20, headerLabel, form);
         wrapper.setAlignment(Pos.CENTER);
+        wrapper.setPadding(new Insets(40));
         tab.setContent(wrapper);
         return tab;
     }
@@ -91,11 +122,20 @@ public class LoginViewDb {
         form.setVgap(10);
 
         TextField fullNameField = new TextField();
-        TextField studentIdField = new TextField();
-        ComboBox<Gender> genderBox = new ComboBox<>(FXCollections.observableArrayList(Gender.values()));
+        fullNameField.setPromptText("Enter full name");
+        fullNameField.setPrefWidth(250);
         
-        // College dropdown - shows full name
+        TextField studentIdField = new TextField();
+        studentIdField.setPromptText("UGR/XXXX/YY");
+        studentIdField.setPrefWidth(250);
+        
+        ComboBox<Gender> genderBox = new ComboBox<>(FXCollections.observableArrayList(Gender.values()));
+        genderBox.setPromptText("Select");
+        genderBox.setPrefWidth(250);
+        
         ComboBox<College> collegeBox = new ComboBox<>(FXCollections.observableArrayList(College.values()));
+        collegeBox.setPromptText("Select");
+        collegeBox.setPrefWidth(250);
         collegeBox.setConverter(new StringConverter<College>() {
             @Override
             public String toString(College college) {
@@ -108,11 +148,12 @@ public class LoginViewDb {
         });
         
         PasswordField passwordField = new PasswordField();
-        Button registerButton = new Button("Create Account");
-
-        studentIdField.setPromptText("UGR/XXXX/YY");
+        passwordField.setPromptText("Min 8 characters");
+        passwordField.setPrefWidth(250);
         
-        // Note: Student ID will be used as username for login
+        Button registerButton = new Button("Create Account");
+        registerButton.setStyle("-fx-font-weight: bold; -fx-padding: 8 20;");
+
         Label idNote = new Label("(This will be your login username)");
         idNote.setStyle("-fx-font-size: 10px; -fx-text-fill: gray;");
         
@@ -124,7 +165,8 @@ public class LoginViewDb {
         form.addRow(5, new Label("Password (min 8 chars)"), passwordField);
         form.add(registerButton, 1, 6);
 
-        registerButton.setOnAction(event -> {
+        // Register action - extracted so Enter key can use it
+        Runnable doRegister = () -> {
             if (fullNameField.getText().isBlank() || studentIdField.getText().isBlank() || 
                 genderBox.getValue() == null || collegeBox.getValue() == null ||
                 passwordField.getText().isBlank()) {
@@ -134,29 +176,25 @@ public class LoginViewDb {
             
             String studentId = studentIdField.getText().trim().toUpperCase();
             
-            // Validate student ID format
             String idError = service.validateStudentIdFormat(studentId);
             if (idError != null) {
                 showAlert(idError);
                 return;
             }
             
-            // Check if student ID is already registered (also serves as username check)
             if (!service.isStudentIdAvailable(studentId)) {
                 showAlert("This Student ID is already registered");
                 return;
             }
             
-            // Password validation - minimum 8 characters
             if (passwordField.getText().length() < 8) {
                 showAlert("Password must be at least 8 characters");
                 return;
             }
             
             try {
-                // Use student ID as username for simpler login
                 Student student = service.registerStudent(
-                        studentId,  // Use student ID as username
+                        studentId,
                         passwordField.getText().trim(),
                         fullNameField.getText().trim(),
                         studentId,
@@ -167,10 +205,28 @@ public class LoginViewDb {
             } catch (Exception e) {
                 showAlert("Registration failed: " + e.getMessage());
             }
+        };
+
+        registerButton.setOnAction(event -> doRegister.run());
+        
+        // Enter key support - move through fields, submit on password
+        fullNameField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) studentIdField.requestFocus();
+        });
+        studentIdField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) genderBox.requestFocus();
+        });
+        passwordField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) doRegister.run();
         });
 
-        VBox wrapper = new VBox(form);
+        // Header
+        Label headerLabel = new Label("Create Account");
+        headerLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+
+        VBox wrapper = new VBox(20, headerLabel, form);
         wrapper.setAlignment(Pos.CENTER);
+        wrapper.setPadding(new Insets(40));
         tab.setContent(wrapper);
         return tab;
     }
