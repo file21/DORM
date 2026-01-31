@@ -236,14 +236,33 @@ public class OwnerDashboardDb {
                 return;
             }
             int count = 0;
+            List<String> notReady = new java.util.ArrayList<>();
+            
             for (DormApplication app : selected) {
                 if (service.isReadyForAssignment(app)) {
                     service.assignBuilding(app.getStudent(), building);
                     count++;
+                } else {
+                    // Collect names of students who haven't completed Phase 2
+                    String studentName = app.getStudent().getDisplayName();
+                    String status = app.getStatus().name();
+                    notReady.add(studentName + " (" + status + ")");
                 }
             }
             refresh();
-            showAlert("Assigned " + count + " students to " + building);
+            
+            // Build appropriate message
+            if (count > 0 && notReady.isEmpty()) {
+                showAlert("Assigned " + count + " student(s) to " + building);
+            } else if (count > 0 && !notReady.isEmpty()) {
+                showAlert("Assigned " + count + " student(s) to " + building + 
+                         "\n\nCould not assign " + notReady.size() + " student(s) - Phase 2 not completed:\n" +
+                         String.join("\n", notReady));
+            } else {
+                // count == 0
+                showAlert("No students were assigned.\n\nSelected students have not completed Phase 2:\n" +
+                         String.join("\n", notReady));
+            }
         });
 
         exportBtn.setOnAction(event -> {

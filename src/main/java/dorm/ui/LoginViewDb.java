@@ -109,8 +109,10 @@ public class LoginViewDb {
         PasswordField passwordField = new PasswordField();
         Button registerButton = new Button("Create Account");
 
+        studentIdField.setPromptText("UGR/XXXXX/YY");
+        
         form.addRow(0, new Label("Full Name"), fullNameField);
-        form.addRow(1, new Label("Student ID"), studentIdField);
+        form.addRow(1, new Label("Student ID (UGR/XXXXX/YY)"), studentIdField);
         form.addRow(2, new Label("Gender"), genderBox);
         form.addRow(3, new Label("College"), collegeBox);
         form.addRow(4, new Label("Username"), usernameField);
@@ -125,6 +127,28 @@ public class LoginViewDb {
                 return;
             }
             
+            String studentId = studentIdField.getText().trim().toUpperCase();
+            String username = usernameField.getText().trim();
+            
+            // Validate student ID format
+            String idError = service.validateStudentIdFormat(studentId);
+            if (idError != null) {
+                showAlert(idError);
+                return;
+            }
+            
+            // Check if student ID is already registered
+            if (!service.isStudentIdAvailable(studentId)) {
+                showAlert("This Student ID is already registered");
+                return;
+            }
+            
+            // Check if username is already taken
+            if (!service.isUsernameAvailable(username)) {
+                showAlert("This username is already taken. Please choose another.");
+                return;
+            }
+            
             // Password validation - minimum 8 characters
             if (passwordField.getText().length() < 8) {
                 showAlert("Password must be at least 8 characters");
@@ -133,10 +157,10 @@ public class LoginViewDb {
             
             try {
                 Student student = service.registerStudent(
-                        usernameField.getText().trim(),
+                        username,
                         passwordField.getText().trim(),
                         fullNameField.getText().trim(),
-                        studentIdField.getText().trim(),
+                        studentId,
                         genderBox.getValue(),
                         collegeBox.getValue()
                 );
