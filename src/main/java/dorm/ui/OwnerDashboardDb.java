@@ -347,8 +347,12 @@ public class OwnerDashboardDb {
                     
                     service.requestResubmit(app, reason);
                     
-                    // Send message to student with the reason
-                    String message = "Your application requires resubmission.\n\nReason: " + reason;
+                    // Send message to student (sanitize and limit to 80 chars)
+                    String message = "Resubmit required: " + reason;
+                    message = message.replaceAll("[\\r\\n]+", " ");
+                    if (message.length() > 80) {
+                        message = message.substring(0, 77) + "...";
+                    }
                     service.sendMessage(owner.getUsername(), app.getStudent().getUsername(), message);
                     count++;
                 }
@@ -736,14 +740,33 @@ public class OwnerDashboardDb {
             }
         });
         
-        TextArea messageArea = new TextArea();
-        messageArea.setPrefRowCount(3);
-        messageArea.setPromptText("Type your reply here");
+        TextField messageField = new TextField();
+        messageField.setPromptText("Type your reply (max 80 characters)");
+        messageField.setPrefWidth(400);
+        
+        Label charCountLabel = new Label("0/80");
+        charCountLabel.setStyle("-fx-text-fill: gray;");
+        
+        // Limit to 80 characters and update counter
+        messageField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && newVal.length() > 80) {
+                messageField.setText(oldVal);
+            } else {
+                int len = newVal != null ? newVal.length() : 0;
+                charCountLabel.setText(len + "/80");
+                if (len >= 70) {
+                    charCountLabel.setStyle("-fx-text-fill: orange;");
+                } else {
+                    charCountLabel.setStyle("-fx-text-fill: gray;");
+                }
+            }
+        });
+        
         Button sendButton = new Button("Send Reply");
 
         sendButton.setOnAction(event -> {
             String studentId = studentIdField.getText().trim();
-            if (studentId.isEmpty() || messageArea.getText().isBlank()) {
+            if (studentId.isEmpty() || messageField.getText().isBlank()) {
                 showAlert("Enter student ID and message");
                 return;
             }
@@ -754,15 +777,18 @@ public class OwnerDashboardDb {
                 return;
             }
             
-            service.sendMessage(owner.getUsername(), student.get().getUsername(), messageArea.getText().trim());
-            messageArea.clear();
+            // Sanitize message: remove line breaks and trim
+            String message = messageField.getText().trim().replaceAll("[\\r\\n]+", " ");
+            service.sendMessage(owner.getUsername(), student.get().getUsername(), message);
+            messageField.clear();
             studentIdField.clear();
             refreshMessages();
             showAlert("Message sent to " + student.get().getDisplayName());
         });
 
         HBox idRow = new HBox(10, studentIdField, studentNameLabel);
-        VBox form = new VBox(10, new Label("Reply to Student:"), idRow, messageArea, sendButton);
+        HBox messageRow = new HBox(10, messageField, charCountLabel);
+        VBox form = new VBox(10, new Label("Reply to Student:"), idRow, messageRow, sendButton);
         form.setPadding(new Insets(10));
         form.setStyle("-fx-border-color: #ccc; -fx-border-radius: 5;");
 

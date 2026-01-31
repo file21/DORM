@@ -1,30 +1,54 @@
 package dorm.util;
 
+import dorm.dao.DataAccessException;
+
 import java.io.*;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Helper class for CSV file operations.
  * Provides common functionality for reading and writing CSV files.
+ * Uses proper exception handling instead of crashing with RuntimeException.
  */
 public final class CsvHelper {
     
     private static final String DATA_DIR = "data";
+    private static final Logger LOGGER = Logger.getLogger(CsvHelper.class.getName());
     
     private CsvHelper() {}
     
     /**
      * Get the data directory path, creating it if it doesn't exist
+     * @throws DataAccessException if directory cannot be created
      */
-    public static Path getDataDirectory() {
+    public static Path getDataDirectory() throws DataAccessException {
         Path dataPath = Paths.get(DATA_DIR);
         if (!Files.exists(dataPath)) {
             try {
                 Files.createDirectories(dataPath);
             } catch (IOException e) {
-                throw new RuntimeException("Failed to create data directory", e);
+                LOGGER.log(Level.SEVERE, "Failed to create data directory", e);
+                throw new DataAccessException("create", "data directory", e);
+            }
+        }
+        return dataPath;
+    }
+    
+    /**
+     * Get the data directory path (safe version that returns null on error)
+     */
+    public static Path getDataDirectorySafe() {
+        Path dataPath = Paths.get(DATA_DIR);
+        if (!Files.exists(dataPath)) {
+            try {
+                Files.createDirectories(dataPath);
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Failed to create data directory", e);
+                return null;
             }
         }
         return dataPath;
@@ -32,17 +56,68 @@ public final class CsvHelper {
     
     /**
      * Get the path to a specific CSV file
+     * @throws DataAccessException if data directory cannot be accessed
      */
-    public static Path getCsvPath(String filename) {
+    public static Path getCsvPath(String filename) throws DataAccessException {
         return getDataDirectory().resolve(filename);
     }
     
     /**
-     * Read all lines from a CSV file (skipping header if present)
+     * Get the path to a specific CSV file (safe version)
+     */
+    public static Path getCsvPathSafe(String filename) {
+        Path dataDir = getDataDirectorySafe();
+        return dataDir != null ? dataDir.resolve(filename) : null;
+    }
+    
+    /**
+     * Read all lines from a CSV file (skipping header if present).
+     * Returns empty list on error instead of crashing.
      */
     public static List<String[]> readAll(String filename, boolean hasHeader) {
-        Path path = getCsvPath(filename);
         List<String[]> records = new ArrayList<>();
+        Path path = getCsvPathSafe(filename);
+        
+        if (path == null || !Files.exists(path)) {
+            return records;
+        }
+        
+        try (BufferedReader reader = Files.newBufferedReader(path)) {
+            String line;
+            boolean isFirst = true;
+            
+            while ((line = reader.readLine()) != null) {
+                if (isFirst && hasHeader) {
+                    isFirst = false;
+                    continue;
+                }
+                isFirst = false;
+                
+                if (!line.trim().isEmpty()) {
+                    records.add(parseCsvLine(line));
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Error reading CSV file: " + filename, e);
+            // Return empty list instead of crashing - UI can show "no data" message
+        }
+        
+        return records;
+    }
+    
+    /**
+     * Read all lines from a CSV file with explicit error handling.
+     * @throws DataAccessException if file cannot be read
+     */
+    public static List<String[]> readAllChecked(String filename, boolean hasHeader) throws DataAccessException {
+        List<String[]> records = new ArrayList<>();
+        Path path;
+        
+        try {
+            path = getCsvPath(filename);
+        } catch (DataAccessException e) {
+            throw e;
+        }
         
         if (!Files.exists(path)) {
             return records;
@@ -64,17 +139,54 @@ public final class CsvHelper {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error reading CSV file: " + filename, e);
+            LOGGER.log(Level.SEVERE, "Error reading CSV file: " + filename, e);
+            throw new DataAccessException("read", filename, e);
         }
         
         return records;
     }
     
     /**
-     * Write all records to a CSV file
+     * Write all records to a CSV file.
+     * Logs errors but does not crash the application.
+     * @return true if successful, false otherwise
      */
-    public static void writeAll(String filename, String header, List<String[]> records) {
-        Path path = getCsvPath(filename);
+    public static boolean writeAll(String filename, String header, List<String[]> records) {
+        Path path = getCsvPathSafe(filename);
+        
+        if (path == null) {
+            LOGGER.warning("Cannot write to " + filename + ": data directory unavailable");
+            return false;
+        }
+        
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+            if (header != null) {
+                writer.write(header);
+                writer.newLine();
+            }
+            
+            for (String[] record : records) {
+                writer.write(toCsvLine(record));
+                writer.newLine();
+            }
+            return true;
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error writing CSV file: " + filename, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Write all records to a CSV file with explicit error handling.
+     * @throws DataAccessException if file cannot be written
+     */
+    public static void writeAllChecked(String filename, String header, List<String[]> records) throws DataAccessException {
+        Path path;
+        try {
+            path = getCsvPath(filename);
+        } catch (DataAccessException e) {
+            throw e;
+        }
         
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             if (header != null) {
@@ -87,15 +199,56 @@ public final class CsvHelper {
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error writing CSV file: " + filename, e);
+            LOGGER.log(Level.SEVERE, "Error writing CSV file: " + filename, e);
+            throw new DataAccessException("write", filename, e);
         }
     }
     
     /**
-     * Append a single record to a CSV file (creates file with header if doesn't exist)
+     * Append a single record to a CSV file (creates file with header if doesn't exist).
+     * Logs errors but does not crash the application.
+     * @return true if successful, false otherwise
      */
-    public static void append(String filename, String header, String[] record) {
-        Path path = getCsvPath(filename);
+    public static boolean append(String filename, String header, String[] record) {
+        Path path = getCsvPathSafe(filename);
+        
+        if (path == null) {
+            LOGGER.warning("Cannot append to " + filename + ": data directory unavailable");
+            return false;
+        }
+        
+        try {
+            boolean fileExists = Files.exists(path);
+            
+            try (BufferedWriter writer = Files.newBufferedWriter(path, 
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+                
+                if (!fileExists && header != null) {
+                    writer.write(header);
+                    writer.newLine();
+                }
+                
+                writer.write(toCsvLine(record));
+                writer.newLine();
+            }
+            return true;
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error appending to CSV file: " + filename, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Append a single record to a CSV file with explicit error handling.
+     * @throws DataAccessException if file cannot be written
+     */
+    public static void appendChecked(String filename, String header, String[] record) throws DataAccessException {
+        Path path;
+        try {
+            path = getCsvPath(filename);
+        } catch (DataAccessException e) {
+            throw e;
+        }
         
         try {
             boolean fileExists = Files.exists(path);
@@ -112,7 +265,8 @@ public final class CsvHelper {
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error appending to CSV file: " + filename, e);
+            LOGGER.log(Level.SEVERE, "Error appending to CSV file: " + filename, e);
+            throw new DataAccessException("append", filename, e);
         }
     }
     
