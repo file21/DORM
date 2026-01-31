@@ -30,7 +30,6 @@ public class OwnerDashboardDb {
     private final TableView<DormApplication> applicationTable;
     private final TableView<User> staffTable;
     private final ListView<Announcement> announcementListView;
-    private final ListView<String> messageList;
     private final Map<String, SimpleBooleanProperty> selectionMap = new HashMap<>();
 
     public OwnerDashboardDb(DatabaseDormService service, User owner, Stage stage) {
@@ -41,7 +40,6 @@ public class OwnerDashboardDb {
         this.applicationTable = new TableView<>();
         this.staffTable = new TableView<>();
         this.announcementListView = new ListView<>();
-        this.messageList = new ListView<>();
         build();
         refresh();
     }
@@ -74,10 +72,118 @@ public class OwnerDashboardDb {
         root.setCenter(tabs);
     }
 
+    // Filter controls
+    private ComboBox<String> filterGender;
+    private ComboBox<String> filterResidency;
+    private ComboBox<String> filterSubcity;
+    private ComboBox<String> filterWoreda;
+    private ComboBox<String> filterCollege;
+    private ComboBox<String> filterSponsorship;
+    private ComboBox<String> filterStatus;
+    
     private Tab createApplicationsTab() {
         Tab tab = new Tab("Applications");
         tab.setClosable(false);
 
+        // ===== Filter Controls =====
+        filterGender = new ComboBox<>();
+        filterGender.getItems().add("All Genders");
+        for (Gender g : Gender.values()) filterGender.getItems().add(g.name());
+        filterGender.setValue("All Genders");
+        
+        filterResidency = new ComboBox<>();
+        filterResidency.getItems().add("All Residency");
+        for (Residency r : Residency.values()) filterResidency.getItems().add(r.name());
+        filterResidency.setValue("All Residency");
+        
+        filterSubcity = new ComboBox<>();
+        filterSubcity.getItems().add("All Subcities");
+        filterSubcity.setValue("All Subcities");
+        filterSubcity.setEditable(true);
+        
+        filterWoreda = new ComboBox<>();
+        filterWoreda.getItems().add("All Woredas");
+        filterWoreda.setValue("All Woredas");
+        filterWoreda.setEditable(true);
+        
+        filterCollege = new ComboBox<>();
+        filterCollege.getItems().add("All Colleges");
+        for (College c : College.values()) filterCollege.getItems().add(c.getAcronym());
+        filterCollege.setValue("All Colleges");
+        
+        filterSponsorship = new ComboBox<>();
+        filterSponsorship.getItems().add("All Sponsorship");
+        for (SponsorshipType s : SponsorshipType.values()) filterSponsorship.getItems().add(s.name());
+        filterSponsorship.setValue("All Sponsorship");
+        
+        filterStatus = new ComboBox<>();
+        filterStatus.getItems().add("All Status");
+        for (ApplicationStatus s : ApplicationStatus.values()) filterStatus.getItems().add(s.name());
+        filterStatus.setValue("All Status");
+        
+        Button applyFilterBtn = new Button("Apply Filter");
+        Button clearFilterBtn = new Button("Clear");
+        
+        applyFilterBtn.setOnAction(e -> applyFilters());
+        clearFilterBtn.setOnAction(e -> {
+            filterGender.setValue("All Genders");
+            filterResidency.setValue("All Residency");
+            filterSubcity.setValue("All Subcities");
+            filterWoreda.setValue("All Woredas");
+            filterCollege.setValue("All Colleges");
+            filterSponsorship.setValue("All Sponsorship");
+            filterStatus.setValue("All Status");
+            applyFilters();
+        });
+        
+        // Update subcity options when residency changes
+        filterResidency.setOnAction(e -> {
+            filterSubcity.getItems().clear();
+            filterSubcity.getItems().add("All Subcities");
+            if ("ADDIS_ABABA".equals(filterResidency.getValue())) {
+                for (AddisSubcity as : AddisSubcity.values()) {
+                    filterSubcity.getItems().add(as.getDisplayName());
+                }
+            }
+            filterSubcity.setValue("All Subcities");
+        });
+        
+        // Update woreda options when subcity changes (for Addis)
+        filterSubcity.setOnAction(e -> {
+            filterWoreda.getItems().clear();
+            filterWoreda.getItems().add("All Woredas");
+            String subcity = filterSubcity.getValue();
+            if (subcity != null && !"All Subcities".equals(subcity)) {
+                for (AddisSubcity as : AddisSubcity.values()) {
+                    if (as.getDisplayName().equals(subcity)) {
+                        for (int i = 1; i <= as.getWoredaCount(); i++) {
+                            filterWoreda.getItems().add(String.valueOf(i));
+                        }
+                        break;
+                    }
+                }
+            }
+            filterWoreda.setValue("All Woredas");
+        });
+        
+        HBox filterRow1 = new HBox(8, 
+            new Label("Gender:"), filterGender,
+            new Label("Residency:"), filterResidency,
+            new Label("Subcity:"), filterSubcity,
+            new Label("Woreda:"), filterWoreda);
+        filterRow1.setPadding(new Insets(5));
+        
+        HBox filterRow2 = new HBox(8,
+            new Label("College:"), filterCollege,
+            new Label("Sponsorship:"), filterSponsorship,
+            new Label("Status:"), filterStatus,
+            applyFilterBtn, clearFilterBtn);
+        filterRow2.setPadding(new Insets(5));
+        
+        VBox filterBox = new VBox(5, filterRow1, filterRow2);
+        filterBox.setStyle("-fx-border-color: #ddd; -fx-border-radius: 5; -fx-padding: 5;");
+
+        // ===== Table Columns =====
         TableColumn<DormApplication, Boolean> selectCol = new TableColumn<>("Select");
         selectCol.setCellValueFactory(cell -> {
             String id = cell.getValue().getId();
@@ -217,15 +323,38 @@ public class OwnerDashboardDb {
                 showAlert("Select applications first");
                 return;
             }
+            
+            // Prompt for reason
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Resubmit Request");
+            dialog.setHeaderText("Request students to resubmit their application");
+            dialog.setContentText("Reason/Note:");
+            
+            Optional<String> result = dialog.showAndWait();
+            if (result.isEmpty() || result.get().isBlank()) {
+                showAlert("Reason is required for resubmit request");
+                return;
+            }
+            
+            String reason = result.get().trim();
+            int count = 0;
+            
             for (DormApplication app : selected) {
                 ApplicationStatus status = app.getStatus();
                 if (status == ApplicationStatus.PHASE_ONE_PENDING ||
                     status == ApplicationStatus.PHASE_ONE_DECLINED ||
                     status == ApplicationStatus.PHASE_ONE_APPROVED) {
-                    service.requestResubmit(app, "");
+                    
+                    service.requestResubmit(app, reason);
+                    
+                    // Send message to student with the reason
+                    String message = "Your application requires resubmission.\n\nReason: " + reason;
+                    service.sendMessage(owner.getUsername(), app.getStudent().getUsername(), message);
+                    count++;
                 }
             }
             refresh();
+            showAlert("Requested " + count + " student(s) to resubmit. Messages sent.");
         });
 
         assignBtn.setOnAction(event -> {
@@ -236,14 +365,33 @@ public class OwnerDashboardDb {
                 return;
             }
             int count = 0;
+            List<String> notReady = new java.util.ArrayList<>();
+            
             for (DormApplication app : selected) {
                 if (service.isReadyForAssignment(app)) {
                     service.assignBuilding(app.getStudent(), building);
                     count++;
+                } else {
+                    // Collect names of students who haven't completed Phase 2
+                    String studentName = app.getStudent().getDisplayName();
+                    String status = app.getStatus().name();
+                    notReady.add(studentName + " (" + status + ")");
                 }
             }
             refresh();
-            showAlert("Assigned " + count + " students to " + building);
+            
+            // Build appropriate message
+            if (count > 0 && notReady.isEmpty()) {
+                showAlert("Assigned " + count + " student(s) to " + building);
+            } else if (count > 0 && !notReady.isEmpty()) {
+                showAlert("Assigned " + count + " student(s) to " + building + 
+                         "\n\nCould not assign " + notReady.size() + " student(s) - Phase 2 not completed:\n" +
+                         String.join("\n", notReady));
+            } else {
+                // count == 0
+                showAlert("No students were assigned.\n\nSelected students have not completed Phase 2:\n" +
+                         String.join("\n", notReady));
+            }
         });
 
         exportBtn.setOnAction(event -> {
@@ -261,10 +409,94 @@ public class OwnerDashboardDb {
         HBox actionRow2 = new HBox(10, buildingField, assignBtn, exportBtn);
         actionRow2.setPadding(new Insets(5));
 
-        VBox wrapper = new VBox(10, applicationTable, actionRow1, actionRow2);
+        VBox wrapper = new VBox(10, filterBox, applicationTable, actionRow1, actionRow2);
         wrapper.setPadding(new Insets(10));
         tab.setContent(wrapper);
         return tab;
+    }
+    
+    /**
+     * Apply filters and sort applications
+     */
+    private void applyFilters() {
+        List<DormApplication> all = service.getApplications();
+        
+        List<DormApplication> filtered = all.stream()
+            .filter(app -> {
+                Student s = app.getStudent();
+                
+                String genderFilter = filterGender.getValue();
+                if (genderFilter != null && !"All Genders".equals(genderFilter)) {
+                    if (s.getGender() == null || !s.getGender().name().equals(genderFilter)) {
+                        return false;
+                    }
+                }
+                
+                String residencyFilter = filterResidency.getValue();
+                if (residencyFilter != null && !"All Residency".equals(residencyFilter)) {
+                    if (s.getResidency() == null || !s.getResidency().name().equals(residencyFilter)) {
+                        return false;
+                    }
+                }
+                
+                String subcityFilter = filterSubcity.getValue();
+                if (subcityFilter != null && !"All Subcities".equals(subcityFilter) && !subcityFilter.isEmpty()) {
+                    if (s.getSubcity() == null || !s.getSubcity().equalsIgnoreCase(subcityFilter)) {
+                        return false;
+                    }
+                }
+                
+                String woredaFilter = filterWoreda.getValue();
+                if (woredaFilter != null && !"All Woredas".equals(woredaFilter) && !woredaFilter.isEmpty()) {
+                    if (s.getWoreda() == null || !s.getWoreda().equals(woredaFilter)) {
+                        return false;
+                    }
+                }
+                
+                String collegeFilter = filterCollege.getValue();
+                if (collegeFilter != null && !"All Colleges".equals(collegeFilter)) {
+                    if (s.getCollege() == null || !s.getCollege().getAcronym().equals(collegeFilter)) {
+                        return false;
+                    }
+                }
+                
+                String sponsorFilter = filterSponsorship.getValue();
+                if (sponsorFilter != null && !"All Sponsorship".equals(sponsorFilter)) {
+                    if (s.getSponsorshipType() == null || !s.getSponsorshipType().name().equals(sponsorFilter)) {
+                        return false;
+                    }
+                }
+                
+                String statusFilter = filterStatus.getValue();
+                if (statusFilter != null && !"All Status".equals(statusFilter)) {
+                    if (!app.getStatus().name().equals(statusFilter)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            })
+            .sorted((a1, a2) -> {
+                // ASSIGNED status goes to end
+                boolean a1Assigned = a1.getStatus() == ApplicationStatus.ASSIGNED;
+                boolean a2Assigned = a2.getStatus() == ApplicationStatus.ASSIGNED;
+                
+                if (a1Assigned && !a2Assigned) return 1;
+                if (!a1Assigned && a2Assigned) return -1;
+                
+                // Sort by submission date (earliest first)
+                String date1 = a1.getSubmittedDate();
+                String date2 = a2.getSubmittedDate();
+                
+                if (date1 == null && date2 == null) return 0;
+                if (date1 == null) return 1;
+                if (date2 == null) return -1;
+                
+                return date1.compareTo(date2);
+            })
+            .collect(Collectors.toList());
+        
+        applicationTable.setItems(FXCollections.observableArrayList(filtered));
     }
 
     private List<DormApplication> getSelectedApplications() {
@@ -481,12 +713,33 @@ public class OwnerDashboardDb {
         Tab tab = new Tab("Messages");
         tab.setClosable(false);
 
+        // Reply form
         TextField studentIdField = new TextField();
         studentIdField.setPromptText("Student ID");
         
+        Label studentNameLabel = new Label();
+        studentNameLabel.setStyle("-fx-text-fill: #666;");
+        
+        // Show student name when ID is entered
+        studentIdField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.trim().isEmpty()) {
+                Optional<Student> student = service.findStudentByStudentId(newVal.trim());
+                if (student.isPresent()) {
+                    studentNameLabel.setText("Student: " + student.get().getDisplayName());
+                    studentNameLabel.setStyle("-fx-text-fill: green;");
+                } else {
+                    studentNameLabel.setText("Student not found");
+                    studentNameLabel.setStyle("-fx-text-fill: red;");
+                }
+            } else {
+                studentNameLabel.setText("");
+            }
+        });
+        
         TextArea messageArea = new TextArea();
         messageArea.setPrefRowCount(3);
-        Button sendButton = new Button("Send");
+        messageArea.setPromptText("Type your reply here");
+        Button sendButton = new Button("Send Reply");
 
         sendButton.setOnAction(event -> {
             String studentId = studentIdField.getText().trim();
@@ -503,16 +756,96 @@ public class OwnerDashboardDb {
             
             service.sendMessage(owner.getUsername(), student.get().getUsername(), messageArea.getText().trim());
             messageArea.clear();
-            refresh();
+            studentIdField.clear();
+            refreshMessages();
+            showAlert("Message sent to " + student.get().getDisplayName());
         });
 
-        VBox form = new VBox(10, studentIdField, messageArea, sendButton);
+        HBox idRow = new HBox(10, studentIdField, studentNameLabel);
+        VBox form = new VBox(10, new Label("Reply to Student:"), idRow, messageArea, sendButton);
         form.setPadding(new Insets(10));
+        form.setStyle("-fx-border-color: #ccc; -fx-border-radius: 5;");
 
-        VBox wrapper = new VBox(10, form, messageList);
+        // Messages table with read checkbox
+        TableView<Message> messagesTable = new TableView<>();
+        messagesTable.setEditable(true);
+        
+        TableColumn<Message, Boolean> readCol = new TableColumn<>("Read");
+        readCol.setCellValueFactory(cell -> {
+            SimpleBooleanProperty prop = new SimpleBooleanProperty(cell.getValue().isRead());
+            prop.addListener((obs, oldVal, newVal) -> {
+                service.markMessageAsRead(cell.getValue(), newVal);
+            });
+            return prop;
+        });
+        readCol.setCellFactory(col -> new CheckBoxTableCell<>());
+        readCol.setEditable(true);
+        readCol.setPrefWidth(50);
+        
+        TableColumn<Message, String> fromCol = new TableColumn<>("From");
+        fromCol.setCellValueFactory(cell -> {
+            String fromUsername = cell.getValue().getFromUser();
+            Optional<Student> student = service.findStudentByUsername(fromUsername);
+            if (student.isPresent()) {
+                Student s = student.get();
+                return new javafx.beans.property.SimpleStringProperty(
+                    s.getDisplayName() + " (" + s.getStudentId() + ")");
+            }
+            return new javafx.beans.property.SimpleStringProperty(fromUsername);
+        });
+        fromCol.setPrefWidth(200);
+        
+        TableColumn<Message, String> messageCol = new TableColumn<>("Message");
+        messageCol.setCellValueFactory(cell -> 
+            new javafx.beans.property.SimpleStringProperty(cell.getValue().getContent()));
+        messageCol.setPrefWidth(350);
+        
+        TableColumn<Message, String> dateCol = new TableColumn<>("Date");
+        dateCol.setCellValueFactory(cell -> 
+            new javafx.beans.property.SimpleStringProperty(
+                cell.getValue().getSentAt().toLocalDate().toString() + " " + 
+                cell.getValue().getSentAt().toLocalTime().withNano(0).toString()));
+        dateCol.setPrefWidth(150);
+        
+        messagesTable.getColumns().addAll(readCol, fromCol, messageCol, dateCol);
+        messagesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        // Double-click to auto-fill student ID for reply
+        messagesTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                Message selected = messagesTable.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    Optional<Student> student = service.findStudentByUsername(selected.getFromUser());
+                    if (student.isPresent()) {
+                        studentIdField.setText(student.get().getStudentId());
+                    }
+                }
+            }
+        });
+        
+        // Store reference for refresh
+        this.messagesTable = messagesTable;
+
+        VBox wrapper = new VBox(10, 
+            new Label("Received Messages (double-click to reply):"), 
+            messagesTable, 
+            new Separator(),
+            form);
         wrapper.setPadding(new Insets(10));
         tab.setContent(wrapper);
         return tab;
+    }
+    
+    private TableView<Message> messagesTable;
+    
+    private void refreshMessages() {
+        if (messagesTable != null) {
+            // Only show messages received by owner (from students)
+            List<Message> received = service.getMessagesForUser(owner.getUsername()).stream()
+                .filter(m -> m.getToUser().equals(owner.getUsername()))
+                .collect(Collectors.toList());
+            messagesTable.setItems(FXCollections.observableArrayList(received));
+        }
     }
 
     private Tab createSearchTab() {
@@ -646,18 +979,14 @@ public class OwnerDashboardDb {
     }
 
     private void refresh() {
-        applicationTable.setItems(FXCollections.observableArrayList(service.getApplications()));
+        applyFilters(); // Apply current filters when refreshing
         staffTable.setItems(FXCollections.observableArrayList(
             service.getUsers().stream()
                 .filter(u -> u.getRole() == Role.ADMIN || u.getRole() == Role.OWNER)
                 .collect(Collectors.toList())
         ));
         announcementListView.setItems(FXCollections.observableArrayList(service.getAnnouncements()));
-        messageList.setItems(FXCollections.observableArrayList(
-                service.getMessagesForUser(owner.getUsername()).stream()
-                        .map(m -> m.getSentAt() + " | " + m.getFromUser() + ": " + m.getContent())
-                        .collect(Collectors.toList())
-        ));
+        refreshMessages();
     }
 
     private void logout() {

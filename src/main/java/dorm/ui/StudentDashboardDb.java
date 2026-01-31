@@ -107,29 +107,97 @@ public class StudentDashboardDb {
 
         ComboBox<SponsorshipType> sponsorshipBox = new ComboBox<>(FXCollections.observableArrayList(SponsorshipType.values()));
         ComboBox<Residency> residencyBox = new ComboBox<>(FXCollections.observableArrayList(Residency.values()));
-        TextField cityField = new TextField();
-        TextField subcityField = new TextField();
         
-        // Woreda - positive integer only
+        // City field (auto-filled for Addis Ababa)
+        TextField cityField = new TextField();
+        
+        // For Addis Ababa: combo boxes
+        ComboBox<AddisSubcity> addisSubcityBox = new ComboBox<>(FXCollections.observableArrayList(AddisSubcity.values()));
+        ComboBox<Integer> addisWoredaBox = new ComboBox<>();
+        
+        // For Sheger/Regional: text fields
+        TextField subcityField = new TextField();
+        subcityField.setPromptText("Enter subcity");
         TextField woredaField = new TextField();
-        woredaField.setPromptText("Enter number");
+        woredaField.setPromptText("Enter woreda number");
+        
+        // Container for subcity input (will swap between combo and text)
+        HBox subcityContainer = new HBox(10);
+        HBox woredaContainer = new HBox(10);
+        
+        // Update woreda options when Addis subcity changes
+        addisSubcityBox.setOnAction(e -> {
+            AddisSubcity selected = addisSubcityBox.getValue();
+            if (selected != null) {
+                addisWoredaBox.getItems().clear();
+                for (int i = 1; i <= selected.getWoredaCount(); i++) {
+                    addisWoredaBox.getItems().add(i);
+                }
+            }
+        });
+        
+        // Switch between Addis combo boxes and text fields based on residency
+        residencyBox.setOnAction(e -> {
+            Residency selected = residencyBox.getValue();
+            subcityContainer.getChildren().clear();
+            woredaContainer.getChildren().clear();
+            
+            if (selected == Residency.ADDIS_ABABA) {
+                cityField.setText("Addis Ababa");
+                cityField.setDisable(true);
+                subcityContainer.getChildren().add(addisSubcityBox);
+                woredaContainer.getChildren().add(addisWoredaBox);
+            } else {
+                cityField.setText("");
+                cityField.setDisable(false);
+                subcityContainer.getChildren().add(subcityField);
+                woredaContainer.getChildren().add(woredaField);
+            }
+        });
         
         TextField disabilityField = new TextField();
         Button submitButton = new Button("Submit Phase 1");
         Label phaseStatusLabel = new Label();
 
+        // Load existing data
         if (student.getSponsorshipType() != null) sponsorshipBox.setValue(student.getSponsorshipType());
-        if (student.getResidency() != null) residencyBox.setValue(student.getResidency());
+        if (student.getResidency() != null) {
+            residencyBox.setValue(student.getResidency());
+            // Trigger the switch logic
+            residencyBox.fireEvent(new javafx.event.ActionEvent());
+        }
         if (student.getCity() != null) cityField.setText(student.getCity());
-        if (student.getSubcity() != null) subcityField.setText(student.getSubcity());
-        if (student.getWoreda() != null) woredaField.setText(student.getWoreda());
+        if (student.getSubcity() != null) {
+            subcityField.setText(student.getSubcity());
+            // Try to find matching Addis subcity
+            for (AddisSubcity as : AddisSubcity.values()) {
+                if (as.getDisplayName().equals(student.getSubcity())) {
+                    addisSubcityBox.setValue(as);
+                    addisSubcityBox.fireEvent(new javafx.event.ActionEvent());
+                    break;
+                }
+            }
+        }
+        if (student.getWoreda() != null) {
+            woredaField.setText(student.getWoreda());
+            try {
+                int w = Integer.parseInt(student.getWoreda());
+                addisWoredaBox.setValue(w);
+            } catch (NumberFormatException ignored) {}
+        }
         if (student.getDisabilityInfo() != null) disabilityField.setText(student.getDisabilityInfo());
+        
+        // Initialize containers if residency not set yet
+        if (residencyBox.getValue() == null) {
+            subcityContainer.getChildren().add(subcityField);
+            woredaContainer.getChildren().add(woredaField);
+        }
 
         form.addRow(0, new Label("Sponsorship Type"), sponsorshipBox);
         form.addRow(1, new Label("Residency"), residencyBox);
         form.addRow(2, new Label("City"), cityField);
-        form.addRow(3, new Label("Subcity"), subcityField);
-        form.addRow(4, new Label("Woreda (number)"), woredaField);
+        form.addRow(3, new Label("Subcity"), subcityContainer);
+        form.addRow(4, new Label("Woreda"), woredaContainer);
         form.addRow(5, new Label("Disability (optional)"), disabilityField);
         form.add(submitButton, 1, 6);
         form.add(phaseStatusLabel, 1, 7);
@@ -147,6 +215,8 @@ public class StudentDashboardDb {
                 cityField.setDisable(true);
                 subcityField.setDisable(true);
                 woredaField.setDisable(true);
+                addisSubcityBox.setDisable(true);
+                addisWoredaBox.setDisable(true);
                 disabilityField.setDisable(true);
             }
             
@@ -157,24 +227,43 @@ public class StudentDashboardDb {
         }
 
         submitButton.setOnAction(event -> {
-            if (sponsorshipBox.getValue() == null || residencyBox.getValue() == null ||
-                cityField.getText().isBlank() || subcityField.getText().isBlank() || 
-                woredaField.getText().isBlank()) {
-                showAlert("All fields except disability are required");
+            if (sponsorshipBox.getValue() == null || residencyBox.getValue() == null) {
+                showAlert("Sponsorship and Residency are required");
                 return;
             }
             
-            // Validate woreda is positive integer
-            String woredaText = woredaField.getText().trim();
-            try {
-                int woredaNum = Integer.parseInt(woredaText);
-                if (woredaNum <= 0) {
-                    showAlert("Woreda must be a positive number");
+            String subcityValue;
+            String woredaValue;
+            String cityValue = cityField.getText().trim();
+            
+            if (residencyBox.getValue() == Residency.ADDIS_ABABA) {
+                if (addisSubcityBox.getValue() == null || addisWoredaBox.getValue() == null) {
+                    showAlert("Please select subcity and woreda");
                     return;
                 }
-            } catch (NumberFormatException e) {
-                showAlert("Woreda must be a valid positive number");
-                return;
+                subcityValue = addisSubcityBox.getValue().getDisplayName();
+                woredaValue = String.valueOf(addisWoredaBox.getValue());
+                cityValue = "Addis Ababa";
+            } else {
+                if (cityField.getText().isBlank() || subcityField.getText().isBlank() || 
+                    woredaField.getText().isBlank()) {
+                    showAlert("City, Subcity and Woreda are required");
+                    return;
+                }
+                subcityValue = subcityField.getText().trim();
+                woredaValue = woredaField.getText().trim();
+                
+                // Validate woreda is positive integer for non-Addis
+                try {
+                    int woredaNum = Integer.parseInt(woredaValue);
+                    if (woredaNum <= 0) {
+                        showAlert("Woreda must be a positive number");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    showAlert("Woreda must be a valid positive number");
+                    return;
+                }
             }
             
             try {
@@ -182,9 +271,9 @@ public class StudentDashboardDb {
                     student,
                     sponsorshipBox.getValue(),
                     residencyBox.getValue(),
-                    cityField.getText().trim(),
-                    subcityField.getText().trim(),
-                    woredaText,
+                    cityValue,
+                    subcityValue,
+                    woredaValue,
                     disabilityField.getText().trim()
                 );
                 phaseStatusLabel.setText("Status: PHASE_ONE_PENDING");

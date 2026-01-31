@@ -16,7 +16,7 @@ import java.util.List;
 public class CsvMessageRepository implements MessageRepository {
     
     private static final String FILENAME = "messages.csv";
-    private static final String HEADER = "id,from_user,to_user,content,sent_at";
+    private static final String HEADER = "id,from_user,to_user,content,sent_at,read";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     
     @Override
@@ -47,6 +47,30 @@ public class CsvMessageRepository implements MessageRepository {
         CsvHelper.append(FILENAME, HEADER, record);
     }
     
+    @Override
+    public void update(Message message) {
+        List<String[]> records = CsvHelper.readAll(FILENAME, true);
+        List<String[]> updated = new ArrayList<>();
+        
+        for (String[] record : records) {
+            if (record.length >= 5 && record[0].equals(message.getId())) {
+                updated.add(messageToRecord(message));
+            } else {
+                // Ensure old records have 6 fields
+                if (record.length == 5) {
+                    String[] newRecord = new String[6];
+                    System.arraycopy(record, 0, newRecord, 0, 5);
+                    newRecord[5] = "false";
+                    updated.add(newRecord);
+                } else {
+                    updated.add(record);
+                }
+            }
+        }
+        
+        CsvHelper.writeAll(FILENAME, HEADER, updated);
+    }
+    
     /**
      * Convert CSV record to Message object
      */
@@ -58,12 +82,19 @@ public class CsvMessageRepository implements MessageRepository {
             sentAt = LocalDateTime.now();
         }
         
+        // Handle read field (may not exist in old records)
+        boolean read = false;
+        if (record.length >= 6) {
+            read = "true".equalsIgnoreCase(record[5]);
+        }
+        
         return new Message(
             record[0],  // id
             record[1],  // from_user
             record[2],  // to_user
             record[3],  // content
-            sentAt      // sent_at
+            sentAt,     // sent_at
+            read        // read
         );
     }
     
@@ -76,7 +107,8 @@ public class CsvMessageRepository implements MessageRepository {
             message.getFromUser(),
             message.getToUser(),
             message.getContent(),
-            message.getSentAt().format(FORMATTER)
+            message.getSentAt().format(FORMATTER),
+            String.valueOf(message.isRead())
         };
     }
 }

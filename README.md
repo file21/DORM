@@ -5,78 +5,35 @@ A JavaFX desktop application for managing dormitory applications and assignments
 ## Features
 
 ### For Students
-- Account registration and login
+- Account registration with ID validation (format: UGR/XXXX/YY)
 - Two-phase application system:
-  - **Phase One**: Sponsorship type, residency, address (city, subcity, woreda)
-  - **Phase Two**: Mother's info, emergency contact, transaction ID (unlocked after Phase One approval)
-- View application status
+  - **Phase 1**: Sponsorship type, residency, address (Addis Ababa residents get dropdown selection)
+  - **Phase 2**: Emergency contact, transaction ID (unlocked after Phase 1 approval)
+- View announcements and messages from admin
 
 ### For Admins
-- Review applications with checkbox selection
-- Bulk approve/decline/request resubmit
+- Filter applications by gender, residency, subcity, woreda, college, sponsorship, status
+- Bulk approve/decline/request resubmit (with reason sent as message)
 - Assign buildings to approved students
 - Export selected students to CSV
-- Post announcements
-- Message students
+- Post/edit/delete announcements
+- Message students with read tracking
 
 ### For Owners
 - All admin capabilities
 - Manage admin staff accounts
 
-## Application Flow
-
-1. **Registration**: Students create account with name, ID, gender, college (8+ char password)
-2. **Phase One**: Fill sponsorship, residency, address info
-3. **Admin Review**: Approve, decline, or request resubmit
-4. **Phase Two**: (After Phase One approval) Fill mother's info, emergency contact, transaction ID
-5. **Building Assignment**: Admin assigns building to approved students
-
 ## Requirements
 
 - **Java JDK 21** or later
-- **JavaFX 21** (OpenJFX)
+- **JavaFX 21** (included with most IDEs or via Maven/Gradle)
+- **IntelliJ IDEA** (recommended)
 
-## Installation
+## How to Run (IntelliJ IDEA)
 
-### Step 1: Install Java JDK 21
-
-**Ubuntu/Debian:**
-```bash
-sudo apt-get update
-sudo apt-get install openjdk-21-jdk
-```
-
-**Windows/macOS:**
-Download from https://adoptium.net/
-
-### Step 2: Install JavaFX
-
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install openjfx
-```
-
-**Windows/macOS:**
-1. Download JavaFX SDK from https://openjfx.io/
-2. Extract to a folder
-3. Update `JAVAFX_PATH` in compile.sh/compile.bat
-
-## How to Compile and Run
-
-### Linux/macOS
-
-```bash
-chmod +x compile.sh run.sh
-./compile.sh
-./run.sh
-```
-
-### Windows
-
-```cmd
-compile.bat
-run.bat
-```
+1. Open project in IntelliJ IDEA
+2. Ensure JavaFX is configured (File → Project Structure → Libraries)
+3. Run `App.java` as main class
 
 ## Default Login Credentials
 
@@ -86,32 +43,18 @@ run.bat
 | Owner   | owner    | owner123  |
 | Student | student1 | pass1234  |
 
-**Note:** New student passwords must be at least 8 characters.
-
 ## Project Structure
 
 ```
 src/main/java/dorm/
 ├── App.java                 # Main entry point
-├── dao/                     # Data Access Objects
-├── model/                   # Data models
-│   ├── Student.java
-│   ├── Gender.java
-│   ├── College.java         # 9 AAU colleges with full name and acronym
-│   ├── Residency.java       # ADDIS_ABABA, SHEGER_CITY, REGIONAL
-│   ├── SponsorshipType.java # GOVERNMENT, SELF_SPONSORED
-│   └── ...
-├── service/
-│   └── DatabaseDormService.java
-├── ui/
-│   ├── LoginViewDb.java
-│   ├── StudentDashboardDb.java
-│   ├── AdminDashboardDb.java
-│   └── OwnerDashboardDb.java
-└── util/
-    └── CsvHelper.java
+├── dao/                     # Data Access (CSV repositories)
+├── model/                   # Data models (Student, User, etc.)
+├── service/                 # Business logic
+├── ui/                      # JavaFX UI components
+└── util/                    # Utilities (CsvHelper)
 
-data/                        # CSV data files
+data/                        # CSV data files (auto-created)
 ├── users.csv
 ├── students.csv
 ├── applications.csv
@@ -119,12 +62,13 @@ data/                        # CSV data files
 └── messages.csv
 ```
 
-## Troubleshooting
+## Application Flow
 
-### JavaFX paths:
-- **Ubuntu/Debian:** `/usr/share/openjfx/lib`
-- **macOS (Homebrew):** `/opt/homebrew/opt/openjfx/libexec/lib`
-- **Windows:** `C:\javafx-sdk-21\lib`
+1. **Registration**: Student creates account (8+ char password, valid student ID)
+2. **Phase 1**: Fill sponsorship, residency, address
+3. **Admin Review**: Approve, decline, or request resubmit (with reason)
+4. **Phase 2**: Fill emergency contact, transaction ID (if self-sponsored)
+5. **Building Assignment**: Admin assigns building
 
 ## License
 
