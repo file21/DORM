@@ -109,10 +109,10 @@ public class LoginViewDb {
         PasswordField passwordField = new PasswordField();
         Button registerButton = new Button("Create Account");
 
-        studentIdField.setPromptText("UGR/XXXXX/YY");
+        studentIdField.setPromptText("UGR/XXXX/YY");
         
         form.addRow(0, new Label("Full Name"), fullNameField);
-        form.addRow(1, new Label("Student ID (UGR/XXXXX/YY)"), studentIdField);
+        form.addRow(1, new Label("Student ID (UGR/XXXX/YY)"), studentIdField);
         form.addRow(2, new Label("Gender"), genderBox);
         form.addRow(3, new Label("College"), collegeBox);
         form.addRow(4, new Label("Username"), usernameField);

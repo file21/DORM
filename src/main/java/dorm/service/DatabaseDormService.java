@@ -76,9 +76,9 @@ public class DatabaseDormService {
     }
     
     /**
-     * Validate student ID format: UGR/XXXXX/YY
+     * Validate student ID format: UGR/XXXX/YY
      * - Must start with "UGR/"
-     * - Followed by exactly 5 digits
+     * - Followed by exactly 4 digits
      * - Then "/"
      * - Then exactly 2 digits (year)
      * Uses only basic string operations (no regex)
@@ -88,9 +88,9 @@ public class DatabaseDormService {
             return "Student ID cannot be empty";
         }
         
-        // Check minimum length: UGR/XXXXX/YY = 12 characters
-        if (studentId.length() != 12) {
-            return "Student ID must be exactly 12 characters (format: UGR/XXXXX/YY)";
+        // Check length: UGR/XXXX/YY = 11 characters
+        if (studentId.length() != 11) {
+            return "Student ID must be exactly 11 characters (format: UGR/XXXX/YY)";
         }
         
         // Check prefix "UGR/"
@@ -99,24 +99,24 @@ public class DatabaseDormService {
             return "Student ID must start with 'UGR/'";
         }
         
-        // Check 5 digits after prefix (positions 4-8)
-        for (int i = 4; i < 9; i++) {
+        // Check 4 digits after prefix (positions 4-7)
+        for (int i = 4; i < 8; i++) {
             char c = studentId.charAt(i);
             if (c < '0' || c > '9') {
-                return "Student ID must have 5 digits after 'UGR/' (format: UGR/XXXXX/YY)";
+                return "Student ID must have 4 digits after 'UGR/' (format: UGR/XXXX/YY)";
             }
         }
         
-        // Check separator "/" at position 9
-        if (studentId.charAt(9) != '/') {
-            return "Student ID must have '/' after the 5 digits (format: UGR/XXXXX/YY)";
+        // Check separator "/" at position 8
+        if (studentId.charAt(8) != '/') {
+            return "Student ID must have '/' after the 4 digits (format: UGR/XXXX/YY)";
         }
         
-        // Check 2 digits for year (positions 10-11)
-        for (int i = 10; i < 12; i++) {
+        // Check 2 digits for year (positions 9-10)
+        for (int i = 9; i < 11; i++) {
             char c = studentId.charAt(i);
             if (c < '0' || c > '9') {
-                return "Student ID must end with 2 digits for year (format: UGR/XXXXX/YY)";
+                return "Student ID must end with 2 digits for year (format: UGR/XXXX/YY)";
             }
         }
         
