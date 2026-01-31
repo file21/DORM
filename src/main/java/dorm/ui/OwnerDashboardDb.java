@@ -30,7 +30,6 @@ public class OwnerDashboardDb {
     private final TableView<DormApplication> applicationTable;
     private final TableView<User> staffTable;
     private final ListView<Announcement> announcementListView;
-    private final ListView<String> messageList;
     private final Map<String, SimpleBooleanProperty> selectionMap = new HashMap<>();
 
     public OwnerDashboardDb(DatabaseDormService service, User owner, Stage stage) {
@@ -41,7 +40,6 @@ public class OwnerDashboardDb {
         this.applicationTable = new TableView<>();
         this.staffTable = new TableView<>();
         this.announcementListView = new ListView<>();
-        this.messageList = new ListView<>();
         build();
         refresh();
     }
@@ -500,12 +498,33 @@ public class OwnerDashboardDb {
         Tab tab = new Tab("Messages");
         tab.setClosable(false);
 
+        // Reply form
         TextField studentIdField = new TextField();
         studentIdField.setPromptText("Student ID");
         
+        Label studentNameLabel = new Label();
+        studentNameLabel.setStyle("-fx-text-fill: #666;");
+        
+        // Show student name when ID is entered
+        studentIdField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.trim().isEmpty()) {
+                Optional<Student> student = service.findStudentByStudentId(newVal.trim());
+                if (student.isPresent()) {
+                    studentNameLabel.setText("Student: " + student.get().getDisplayName());
+                    studentNameLabel.setStyle("-fx-text-fill: green;");
+                } else {
+                    studentNameLabel.setText("Student not found");
+                    studentNameLabel.setStyle("-fx-text-fill: red;");
+                }
+            } else {
+                studentNameLabel.setText("");
+            }
+        });
+        
         TextArea messageArea = new TextArea();
         messageArea.setPrefRowCount(3);
-        Button sendButton = new Button("Send");
+        messageArea.setPromptText("Type your reply here");
+        Button sendButton = new Button("Send Reply");
 
         sendButton.setOnAction(event -> {
             String studentId = studentIdField.getText().trim();
@@ -522,16 +541,96 @@ public class OwnerDashboardDb {
             
             service.sendMessage(owner.getUsername(), student.get().getUsername(), messageArea.getText().trim());
             messageArea.clear();
-            refresh();
+            studentIdField.clear();
+            refreshMessages();
+            showAlert("Message sent to " + student.get().getDisplayName());
         });
 
-        VBox form = new VBox(10, studentIdField, messageArea, sendButton);
+        HBox idRow = new HBox(10, studentIdField, studentNameLabel);
+        VBox form = new VBox(10, new Label("Reply to Student:"), idRow, messageArea, sendButton);
         form.setPadding(new Insets(10));
+        form.setStyle("-fx-border-color: #ccc; -fx-border-radius: 5;");
 
-        VBox wrapper = new VBox(10, form, messageList);
+        // Messages table with read checkbox
+        TableView<Message> messagesTable = new TableView<>();
+        messagesTable.setEditable(true);
+        
+        TableColumn<Message, Boolean> readCol = new TableColumn<>("Read");
+        readCol.setCellValueFactory(cell -> {
+            SimpleBooleanProperty prop = new SimpleBooleanProperty(cell.getValue().isRead());
+            prop.addListener((obs, oldVal, newVal) -> {
+                service.markMessageAsRead(cell.getValue(), newVal);
+            });
+            return prop;
+        });
+        readCol.setCellFactory(col -> new CheckBoxTableCell<>());
+        readCol.setEditable(true);
+        readCol.setPrefWidth(50);
+        
+        TableColumn<Message, String> fromCol = new TableColumn<>("From");
+        fromCol.setCellValueFactory(cell -> {
+            String fromUsername = cell.getValue().getFromUser();
+            Optional<Student> student = service.findStudentByUsername(fromUsername);
+            if (student.isPresent()) {
+                Student s = student.get();
+                return new javafx.beans.property.SimpleStringProperty(
+                    s.getDisplayName() + " (" + s.getStudentId() + ")");
+            }
+            return new javafx.beans.property.SimpleStringProperty(fromUsername);
+        });
+        fromCol.setPrefWidth(200);
+        
+        TableColumn<Message, String> messageCol = new TableColumn<>("Message");
+        messageCol.setCellValueFactory(cell -> 
+            new javafx.beans.property.SimpleStringProperty(cell.getValue().getContent()));
+        messageCol.setPrefWidth(350);
+        
+        TableColumn<Message, String> dateCol = new TableColumn<>("Date");
+        dateCol.setCellValueFactory(cell -> 
+            new javafx.beans.property.SimpleStringProperty(
+                cell.getValue().getSentAt().toLocalDate().toString() + " " + 
+                cell.getValue().getSentAt().toLocalTime().withNano(0).toString()));
+        dateCol.setPrefWidth(150);
+        
+        messagesTable.getColumns().addAll(readCol, fromCol, messageCol, dateCol);
+        messagesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        // Double-click to auto-fill student ID for reply
+        messagesTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                Message selected = messagesTable.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    Optional<Student> student = service.findStudentByUsername(selected.getFromUser());
+                    if (student.isPresent()) {
+                        studentIdField.setText(student.get().getStudentId());
+                    }
+                }
+            }
+        });
+        
+        // Store reference for refresh
+        this.messagesTable = messagesTable;
+
+        VBox wrapper = new VBox(10, 
+            new Label("Received Messages (double-click to reply):"), 
+            messagesTable, 
+            new Separator(),
+            form);
         wrapper.setPadding(new Insets(10));
         tab.setContent(wrapper);
         return tab;
+    }
+    
+    private TableView<Message> messagesTable;
+    
+    private void refreshMessages() {
+        if (messagesTable != null) {
+            // Only show messages received by owner (from students)
+            List<Message> received = service.getMessagesForUser(owner.getUsername()).stream()
+                .filter(m -> m.getToUser().equals(owner.getUsername()))
+                .collect(Collectors.toList());
+            messagesTable.setItems(FXCollections.observableArrayList(received));
+        }
     }
 
     private Tab createSearchTab() {
@@ -672,11 +771,7 @@ public class OwnerDashboardDb {
                 .collect(Collectors.toList())
         ));
         announcementListView.setItems(FXCollections.observableArrayList(service.getAnnouncements()));
-        messageList.setItems(FXCollections.observableArrayList(
-                service.getMessagesForUser(owner.getUsername()).stream()
-                        .map(m -> m.getSentAt() + " | " + m.getFromUser() + ": " + m.getContent())
-                        .collect(Collectors.toList())
-        ));
+        refreshMessages();
     }
 
     private void logout() {

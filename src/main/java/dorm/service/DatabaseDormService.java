@@ -319,4 +319,21 @@ public class DatabaseDormService {
     public List<Message> getMessagesForUser(String username) {
         return messageRepository.findByUser(username);
     }
+    
+    public void markMessageAsRead(Message message, boolean read) {
+        message.setRead(read);
+        messageRepository.update(message);
+    }
+    
+    /**
+     * Find a student by their username
+     */
+    public Optional<Student> findStudentByUsername(String username) {
+        for (Student s : studentRepository.findAll()) {
+            if (s.getUsername().equals(username)) {
+                return Optional.of(s);
+            }
+        }
+        return Optional.empty();
+    }
 }
