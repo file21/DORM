@@ -144,16 +144,23 @@ src/main/java/dorm/
 ├── ui/                         # Presentation Layer (JavaFX)
 │   ├── LoginViewDb.java        # Login/Registration screen
 │   ├── StudentDashboardDb.java # Student dashboard
-│   ├── AdminDashboardDb.java   # Admin dashboard
-│   ├── OwnerDashboardDb.java   # Owner dashboard
+│   ├── AdminDashboardDb.java   # Admin dashboard (~45 LOC - uses BaseDashboard)
+│   ├── OwnerDashboardDb.java   # Owner dashboard (~69 LOC - adds StaffTab)
 │   └── components/             # Reusable UI components (SRP)
+│       ├── BaseDashboard.java      # Shared dashboard base (composition)
+│       ├── ApplicationsTab.java    # Applications management tab
+│       ├── AnnouncementsTab.java   # Announcements tab wrapper
+│       ├── MessagesTab.java        # Messages tab wrapper
+│       ├── SearchTab.java          # Student search tab wrapper
+│       ├── StaffTab.java           # Staff management (Owner only)
 │       ├── ApplicationTableBuilder.java
 │       ├── ApplicationFilterPane.java
 │       ├── ApplicationActionsPane.java
 │       ├── AnnouncementPane.java
 │       ├── MessagePane.java
 │       ├── StudentSearchPane.java
-│       └── ExportUtil.java
+│       ├── ExportUtil.java
+│       └── AlertHelper.java        # Consistent error/success alerts
 └── util/                       # Utilities
     └── CsvHelper.java          # CSV file operations
 
@@ -180,8 +187,8 @@ data/                           # CSV data files (auto-created)
 
 | Principle | Implementation |
 |-----------|---------------|
-| **SRP** | Repositories handle data, Service handles logic, UI handles display |
-| **OCP** | New repository implementations (e.g., SQL) can be added without modifying existing code |
+| **SRP** | Each component has single responsibility: Tabs, Panes, Builders, Helpers |
+| **OCP** | BaseDashboard can be extended without modification (Owner adds StaffTab) |
 | **LSP** | Student can substitute for User where applicable |
 | **ISP** | Small, focused repository interfaces |
 | **DIP** | Service depends on repository interfaces, not concrete implementations |
@@ -189,8 +196,21 @@ data/                           # CSV data files (auto-created)
 ### Design Patterns
 
 - **Repository Pattern**: Abstract data access behind interfaces
-- **Factory Pattern**: `DaoFactory` creates repository instances
+- **Factory Pattern**: `DaoFactory` creates repository instances  
+- **Composition**: BaseDashboard used by Admin/Owner via composition (not inheritance)
+- **Builder Pattern**: `ApplicationTableBuilder` builds complex table configurations
+- **Observer Pattern**: Callbacks for refresh/alert notifications between components
 - **MVC-like**: Model (entities), View (JavaFX UI), Controller (Service)
+
+### Code Quality Metrics
+
+| Component | V5 LOC | V7 LOC | Reduction |
+|-----------|--------|--------|-----------|
+| AdminDashboardDb | ~977 | ~45 | 95% |
+| OwnerDashboardDb | ~1034 | ~69 | 93% |
+| **Total Dashboards** | **~2011** | **~114** | **94%** |
+
+*Logic moved to reusable components in `ui/components/`*
 
 ## Application Flow
 

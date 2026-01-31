@@ -259,7 +259,14 @@ public class ApplicationActionsPane extends VBox {
     private void showAlert(String message) {
         if (alertCallback != null) {
             alertCallback.accept(message);
+        } else {
+            // Fallback to AlertHelper if no callback set
+            AlertHelper.showInfo(message);
         }
+    }
+    
+    private void showError(String context, Exception e) {
+        AlertHelper.showDataError(context, e);
     }
     
     private void notifyActionCompleted() {
