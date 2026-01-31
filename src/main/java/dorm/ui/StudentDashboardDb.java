@@ -4,12 +4,15 @@ import dorm.model.*;
 import dorm.service.DatabaseDormService;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -42,17 +45,28 @@ public class StudentDashboardDb {
     }
 
     private void build() {
-        Label headerLabel = new Label("Welcome, " + student.getDisplayName() + " (ID: " + student.getStudentId() + ")");
-        headerLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        Label welcomeLabel = new Label("Welcome, " + student.getDisplayName());
+        welcomeLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        
+        Label idLabel = new Label("ID: " + student.getStudentId());
+        idLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        
+        VBox userInfo = new VBox(2, welcomeLabel, idLabel);
+        
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
         
         Button refreshButton = new Button("Refresh");
         refreshButton.setOnAction(event -> refreshAll());
         
         Button logoutButton = new Button("Logout");
+        logoutButton.setStyle("-fx-text-fill: #666;");
         logoutButton.setOnAction(event -> logout());
         
-        HBox header = new HBox(20, headerLabel, refreshButton, logoutButton);
-        header.setPadding(new Insets(10));
+        HBox header = new HBox(20, userInfo, spacer, refreshButton, logoutButton);
+        header.setPadding(new Insets(15, 20, 15, 20));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle("-fx-background-color: #f8f8f8; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;");
         root.setTop(header);
 
         tabs = new TabPane();
