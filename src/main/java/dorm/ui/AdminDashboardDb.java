@@ -219,15 +219,38 @@ public class AdminDashboardDb {
                 showAlert("Select applications first");
                 return;
             }
+            
+            // Prompt for reason
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Resubmit Request");
+            dialog.setHeaderText("Request students to resubmit their application");
+            dialog.setContentText("Reason/Note:");
+            
+            Optional<String> result = dialog.showAndWait();
+            if (result.isEmpty() || result.get().isBlank()) {
+                showAlert("Reason is required for resubmit request");
+                return;
+            }
+            
+            String reason = result.get().trim();
+            int count = 0;
+            
             for (DormApplication app : selected) {
                 ApplicationStatus status = app.getStatus();
                 if (status == ApplicationStatus.PHASE_ONE_PENDING ||
                     status == ApplicationStatus.PHASE_ONE_DECLINED ||
                     status == ApplicationStatus.PHASE_ONE_APPROVED) {
-                    service.requestResubmit(app, "");
+                    
+                    service.requestResubmit(app, reason);
+                    
+                    // Send message to student with the reason
+                    String message = "Your application requires resubmission.\n\nReason: " + reason;
+                    service.sendMessage(admin.getUsername(), app.getStudent().getUsername(), message);
+                    count++;
                 }
             }
             refresh();
+            showAlert("Requested " + count + " student(s) to resubmit. Messages sent.");
         });
 
         assignBtn.setOnAction(event -> {
