@@ -426,19 +426,39 @@ public class StudentDashboardDb {
                 .collect(Collectors.toList())
         );
 
-        TextArea messageArea = new TextArea();
-        messageArea.setPrefRowCount(3);
-        messageArea.setPromptText("Type your message here");
+        TextField messageField = new TextField();
+        messageField.setPromptText("Type your message (max 80 characters)");
+        
+        Label charCountLabel = new Label("0/80");
+        charCountLabel.setStyle("-fx-text-fill: gray;");
+        
+        // Limit to 80 characters and update counter
+        messageField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && newVal.length() > 80) {
+                messageField.setText(oldVal);
+            } else {
+                int len = newVal != null ? newVal.length() : 0;
+                charCountLabel.setText(len + "/80");
+                if (len >= 70) {
+                    charCountLabel.setStyle("-fx-text-fill: orange;");
+                } else {
+                    charCountLabel.setStyle("-fx-text-fill: gray;");
+                }
+            }
+        });
+        
         Button sendButton = new Button("Send");
 
         sendButton.setOnAction(event -> {
-            if (adminBox.getValue() == null || messageArea.getText().isBlank()) {
+            if (adminBox.getValue() == null || messageField.getText().isBlank()) {
                 showAlert("Select admin and enter message");
                 return;
             }
             try {
-                service.sendMessage(student.getUsername(), adminBox.getValue(), messageArea.getText().trim());
-                messageArea.clear();
+                // Sanitize message: remove line breaks and trim
+                String message = messageField.getText().trim().replaceAll("[\\r\\n]+", " ");
+                service.sendMessage(student.getUsername(), adminBox.getValue(), message);
+                messageField.clear();
                 refresh();
                 showAlert("Message sent");
             } catch (Exception e) {
@@ -446,7 +466,9 @@ public class StudentDashboardDb {
             }
         });
 
-        VBox form = new VBox(10, adminBox, messageArea, sendButton);
+        HBox messageRow = new HBox(10, messageField, charCountLabel);
+        messageField.setPrefWidth(400);
+        VBox form = new VBox(10, adminBox, messageRow, sendButton);
         form.setPadding(new Insets(10));
 
         VBox wrapper = new VBox(10, form, new Label("Received Messages:"), messageList);

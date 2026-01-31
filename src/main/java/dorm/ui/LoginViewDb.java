@@ -47,10 +47,12 @@ public class LoginViewDb {
         form.setVgap(10);
 
         TextField usernameField = new TextField();
+        usernameField.setPromptText("Student ID (e.g., UGR/1234/16)");
         PasswordField passwordField = new PasswordField();
         Button loginButton = new Button("Login");
 
-        form.addRow(0, new Label("Username"), usernameField);
+        Label usernameLabel = new Label("Username / Student ID");
+        form.addRow(0, usernameLabel, usernameField);
         form.addRow(1, new Label("Password"), passwordField);
         form.add(loginButton, 1, 2);
 
@@ -105,30 +107,32 @@ public class LoginViewDb {
             }
         });
         
-        TextField usernameField = new TextField();
         PasswordField passwordField = new PasswordField();
         Button registerButton = new Button("Create Account");
 
         studentIdField.setPromptText("UGR/XXXX/YY");
         
+        // Note: Student ID will be used as username for login
+        Label idNote = new Label("(This will be your login username)");
+        idNote.setStyle("-fx-font-size: 10px; -fx-text-fill: gray;");
+        
         form.addRow(0, new Label("Full Name"), fullNameField);
         form.addRow(1, new Label("Student ID (UGR/XXXX/YY)"), studentIdField);
-        form.addRow(2, new Label("Gender"), genderBox);
-        form.addRow(3, new Label("College"), collegeBox);
-        form.addRow(4, new Label("Username"), usernameField);
+        form.add(idNote, 1, 2);
+        form.addRow(3, new Label("Gender"), genderBox);
+        form.addRow(4, new Label("College"), collegeBox);
         form.addRow(5, new Label("Password (min 8 chars)"), passwordField);
         form.add(registerButton, 1, 6);
 
         registerButton.setOnAction(event -> {
             if (fullNameField.getText().isBlank() || studentIdField.getText().isBlank() || 
                 genderBox.getValue() == null || collegeBox.getValue() == null ||
-                usernameField.getText().isBlank() || passwordField.getText().isBlank()) {
+                passwordField.getText().isBlank()) {
                 showAlert("All fields required");
                 return;
             }
             
             String studentId = studentIdField.getText().trim().toUpperCase();
-            String username = usernameField.getText().trim();
             
             // Validate student ID format
             String idError = service.validateStudentIdFormat(studentId);
@@ -137,15 +141,9 @@ public class LoginViewDb {
                 return;
             }
             
-            // Check if student ID is already registered
+            // Check if student ID is already registered (also serves as username check)
             if (!service.isStudentIdAvailable(studentId)) {
                 showAlert("This Student ID is already registered");
-                return;
-            }
-            
-            // Check if username is already taken
-            if (!service.isUsernameAvailable(username)) {
-                showAlert("This username is already taken. Please choose another.");
                 return;
             }
             
@@ -156,8 +154,9 @@ public class LoginViewDb {
             }
             
             try {
+                // Use student ID as username for simpler login
                 Student student = service.registerStudent(
-                        username,
+                        studentId,  // Use student ID as username
                         passwordField.getText().trim(),
                         fullNameField.getText().trim(),
                         studentId,
