@@ -11,6 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
+import javafx.geometry.Pos;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -33,6 +34,7 @@ public class AdminController {
     @FXML protected ComboBox<String> filterGender;
     @FXML protected ComboBox<String> filterResidency;
     @FXML protected ComboBox<String> filterSubcity;
+    @FXML protected ComboBox<String> filterWoreda;
     @FXML protected ComboBox<String> filterCollege;
     @FXML protected ComboBox<String> filterSponsorship;
     @FXML protected ComboBox<String> filterStatus;
@@ -45,7 +47,10 @@ public class AdminController {
     @FXML protected TableColumn<DormApplication, String> genderColumn;
     @FXML protected TableColumn<DormApplication, String> collegeColumn;
     @FXML protected TableColumn<DormApplication, String> residencyColumn;
+    @FXML protected TableColumn<DormApplication, String> subcityColumn;
+    @FXML protected TableColumn<DormApplication, String> woredaColumn;
     @FXML protected TableColumn<DormApplication, String> sponsorshipColumn;
+    @FXML protected TableColumn<DormApplication, String> transactionIdColumn;
     @FXML protected TableColumn<DormApplication, String> statusColumn;
     @FXML protected TableColumn<DormApplication, String> buildingColumn;
     
@@ -123,6 +128,11 @@ public class AdminController {
         filterSubcity.getItems().add("All Subcities");
         filterSubcity.setValue("All Subcities");
         
+        if (filterWoreda != null) {
+            filterWoreda.getItems().add("All Woredas");
+            filterWoreda.setValue("All Woredas");
+        }
+        
         filterCollege.getItems().add("All Colleges");
         for (College c : College.values()) filterCollege.getItems().add(c.getAcronym());
         filterCollege.setValue("All Colleges");
@@ -135,10 +145,15 @@ public class AdminController {
         for (ApplicationStatus s : ApplicationStatus.values()) filterStatus.getItems().add(s.name());
         filterStatus.setValue("All Status");
         
-        // Update subcity options when residency changes
+        // Update subcity and woreda options when residency changes
         filterResidency.setOnAction(e -> {
             filterSubcity.getItems().clear();
             filterSubcity.getItems().add("All Subcities");
+            if (filterWoreda != null) {
+                filterWoreda.getItems().clear();
+                filterWoreda.getItems().add("All Woredas");
+                filterWoreda.setValue("All Woredas");
+            }
             if ("ADDIS_ABABA".equals(filterResidency.getValue())) {
                 for (AddisSubcity as : AddisSubcity.values()) {
                     filterSubcity.getItems().add(as.getDisplayName());
@@ -146,10 +161,31 @@ public class AdminController {
             }
             filterSubcity.setValue("All Subcities");
         });
+        
+        // Update woreda options when subcity changes (for Addis Ababa)
+        filterSubcity.setOnAction(e -> {
+            if (filterWoreda != null && "ADDIS_ABABA".equals(filterResidency.getValue())) {
+                filterWoreda.getItems().clear();
+                filterWoreda.getItems().add("All Woredas");
+                String selectedSubcity = filterSubcity.getValue();
+                if (selectedSubcity != null && !"All Subcities".equals(selectedSubcity)) {
+                    for (AddisSubcity as : AddisSubcity.values()) {
+                        if (as.getDisplayName().equals(selectedSubcity)) {
+                            for (int i = 1; i <= as.getWoredaCount(); i++) {
+                                filterWoreda.getItems().add(String.valueOf(i));
+                            }
+                            break;
+                        }
+                    }
+                }
+                filterWoreda.setValue("All Woredas");
+            }
+        });
     }
     
     protected void setupApplicationTable() {
         applicationTable.setEditable(true);
+        applicationTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         
         selectColumn.setCellValueFactory(cell -> {
             String id = cell.getValue().getId();
@@ -161,35 +197,82 @@ public class AdminController {
         
         nameColumn.setCellValueFactory(cell -> 
             new SimpleStringProperty(cell.getValue().getStudent().getDisplayName()));
+        centerColumnText(nameColumn);
         
         studentIdColumn.setCellValueFactory(cell -> 
             new SimpleStringProperty(cell.getValue().getStudent().getStudentId()));
+        centerColumnText(studentIdColumn);
         
         genderColumn.setCellValueFactory(cell -> {
             Gender g = cell.getValue().getStudent().getGender();
             return new SimpleStringProperty(g != null ? g.name() : "-");
         });
+        centerColumnText(genderColumn);
         
         collegeColumn.setCellValueFactory(cell -> {
             College c = cell.getValue().getStudent().getCollege();
             return new SimpleStringProperty(c != null ? c.getAcronym() : "-");
         });
+        centerColumnText(collegeColumn);
         
         residencyColumn.setCellValueFactory(cell -> {
             Residency r = cell.getValue().getStudent().getResidency();
             return new SimpleStringProperty(r != null ? r.name() : "-");
         });
+        centerColumnText(residencyColumn);
+        
+        if (subcityColumn != null) {
+            subcityColumn.setCellValueFactory(cell -> {
+                String subcity = cell.getValue().getStudent().getSubcity();
+                return new SimpleStringProperty(subcity != null ? subcity : "-");
+            });
+            centerColumnText(subcityColumn);
+        }
+        
+        if (woredaColumn != null) {
+            woredaColumn.setCellValueFactory(cell -> {
+                String woreda = cell.getValue().getStudent().getWoreda();
+                return new SimpleStringProperty(woreda != null ? woreda : "-");
+            });
+            centerColumnText(woredaColumn);
+        }
         
         sponsorshipColumn.setCellValueFactory(cell -> {
             SponsorshipType s = cell.getValue().getStudent().getSponsorshipType();
             return new SimpleStringProperty(s != null ? s.name() : "-");
         });
+        centerColumnText(sponsorshipColumn);
+        
+        if (transactionIdColumn != null) {
+            transactionIdColumn.setCellValueFactory(cell -> {
+                String transId = cell.getValue().getStudent().getTransactionId();
+                return new SimpleStringProperty(transId != null && !transId.isEmpty() ? transId : "-");
+            });
+            centerColumnText(transactionIdColumn);
+        }
         
         statusColumn.setCellValueFactory(cell -> 
             new SimpleStringProperty(cell.getValue().getStatus().name()));
+        centerColumnText(statusColumn);
         
         buildingColumn.setCellValueFactory(cell -> 
             new SimpleStringProperty(cell.getValue().getStudent().getAssignedBuilding()));
+        centerColumnText(buildingColumn);
+    }
+    
+    protected <T> void centerColumnText(TableColumn<T, String> column) {
+        column.setCellFactory(tc -> new TableCell<T, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    setStyle("-fx-alignment: CENTER;");
+                }
+            }
+        });
     }
     
     protected void setupAnnouncements() {
@@ -285,6 +368,9 @@ public class AdminController {
                 replyCharCountLabel.setText(len + "/80");
             }
         });
+        
+        // Enter key to send reply
+        replyMessageField.setOnAction(e -> onSendReply());
     }
     
     protected void setupSearch() {
@@ -319,6 +405,8 @@ public class AdminController {
                     s.getResidency() != null ? s.getResidency().name() : null)) return false;
                     
                 if (!matchesFilter(filterSubcity.getValue(), "All Subcities", s.getSubcity())) return false;
+                
+                if (filterWoreda != null && !matchesFilter(filterWoreda.getValue(), "All Woredas", s.getWoreda())) return false;
                 
                 if (!matchesFilter(filterCollege.getValue(), "All Colleges",
                     s.getCollege() != null ? s.getCollege().getAcronym() : null)) return false;
@@ -362,6 +450,14 @@ public class AdminController {
         return selected;
     }
     
+    protected void clearSelections() {
+        for (SimpleBooleanProperty prop : selectionMap.values()) {
+            prop.set(false);
+        }
+        selectAllCheckbox.setSelected(false);
+        applicationTable.refresh();
+    }
+    
     @FXML
     protected void onRefresh() {
         refresh();
@@ -394,6 +490,7 @@ public class AdminController {
         filterGender.setValue("All Genders");
         filterResidency.setValue("All Residency");
         filterSubcity.setValue("All Subcities");
+        if (filterWoreda != null) filterWoreda.setValue("All Woredas");
         filterCollege.setValue("All Colleges");
         filterSponsorship.setValue("All Sponsorship");
         filterStatus.setValue("All Status");
@@ -430,6 +527,7 @@ public class AdminController {
             }
         }
         
+        clearSelections();
         refresh();
         showAlert("Approved " + selected.size() + " applications", Alert.AlertType.INFORMATION);
     }
@@ -454,6 +552,7 @@ public class AdminController {
             }
         }
         
+        clearSelections();
         refresh();
         showAlert("Declined " + selected.size() + " applications", Alert.AlertType.INFORMATION);
     }
@@ -495,6 +594,7 @@ public class AdminController {
             }
         }
         
+        clearSelections();
         refresh();
         showAlert("Requested " + count + " resubmissions", Alert.AlertType.INFORMATION);
     }
@@ -517,6 +617,7 @@ public class AdminController {
             }
         }
         
+        clearSelections();
         refresh();
         showAlert("Assigned " + count + " students to " + building, Alert.AlertType.INFORMATION);
     }
@@ -535,23 +636,35 @@ public class AdminController {
         if (file == null) return;
         
         try (FileWriter writer = new FileWriter(file)) {
-            writer.write("Name,Student ID,Gender,Sponsorship,Residency,Status,Building\n");
+            writer.write("Name,Student ID,Gender,Sponsorship,Residency,Subcity,Woreda,Transaction ID,Status,Building\n");
             for (DormApplication app : selected) {
                 Student s = app.getStudent();
-                writer.write(String.format("%s,%s,%s,%s,%s,%s,%s\n",
-                    s.getDisplayName(),
-                    s.getStudentId(),
+                writer.write(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    escapeCsv(s.getDisplayName()),
+                    escapeCsv(s.getStudentId()),
                     s.getGender() != null ? s.getGender().name() : "-",
                     s.getSponsorshipType() != null ? s.getSponsorshipType().name() : "-",
                     s.getResidency() != null ? s.getResidency().name() : "-",
+                    escapeCsv(s.getSubcity() != null ? s.getSubcity() : "-"),
+                    escapeCsv(s.getWoreda() != null ? s.getWoreda() : "-"),
+                    escapeCsv(s.getTransactionId() != null && !s.getTransactionId().isEmpty() ? s.getTransactionId() : "-"),
                     app.getStatus().name(),
-                    s.getAssignedBuilding()
+                    escapeCsv(s.getAssignedBuilding())
                 ));
             }
+            clearSelections();
             showAlert("Exported to " + file.getName(), Alert.AlertType.INFORMATION);
         } catch (IOException e) {
             showAlert("Export failed: " + e.getMessage(), Alert.AlertType.ERROR);
         }
+    }
+    
+    protected String escapeCsv(String value) {
+        if (value == null) return "-";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
     
     @FXML

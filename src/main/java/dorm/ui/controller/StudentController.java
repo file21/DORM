@@ -93,10 +93,18 @@ public class StudentController {
             Residency selected = residencyBox.getValue();
             subcityBox.getItems().clear();
             woredaBox.getItems().clear();
+            subcityBox.setValue(null);
+            woredaBox.setValue(null);
+            subcityBox.getEditor().clear();
+            woredaBox.getEditor().clear();
             
             if (selected == Residency.ADDIS_ABABA) {
                 cityField.setText("Addis Ababa");
                 cityField.setDisable(true);
+                
+                // For Addis Ababa: must select from dropdown (not editable)
+                subcityBox.setEditable(false);
+                woredaBox.setEditable(false);
                 
                 for (AddisSubcity as : AddisSubcity.values()) {
                     subcityBox.getItems().add(as.getDisplayName());
@@ -104,15 +112,20 @@ public class StudentController {
             } else {
                 cityField.setText("");
                 cityField.setDisable(false);
+                
+                // For Sheger/Regional: can type subcity, but woreda must be typed as positive integer
+                subcityBox.setEditable(true);
+                woredaBox.setEditable(true);
             }
         });
         
         // Handle subcity change for Addis
         subcityBox.setOnAction(e -> {
             String selected = subcityBox.getValue();
-            woredaBox.getItems().clear();
             
             if (selected != null && residencyBox.getValue() == Residency.ADDIS_ABABA) {
+                woredaBox.getItems().clear();
+                woredaBox.setValue(null);
                 for (AddisSubcity as : AddisSubcity.values()) {
                     if (as.getDisplayName().equals(selected)) {
                         for (int i = 1; i <= as.getWoredaCount(); i++) {
@@ -252,6 +265,9 @@ public class StudentController {
                 charCountLabel.setText(len + "/80");
             }
         });
+        
+        // Enter key to send message
+        messageField.setOnAction(e -> onSendMessage());
     }
     
     private void refreshProfile() {
@@ -321,16 +337,72 @@ public class StudentController {
         String subcity = subcityBox.getValue();
         String woreda = woredaBox.getValue();
         
-        if (city.isEmpty() || subcity == null || subcity.isEmpty() || woreda == null || woreda.isEmpty()) {
-            showAlert("City, Subcity and Woreda are required", Alert.AlertType.WARNING);
+        // Get editor values for editable combo boxes (Sheger/Regional)
+        if (subcity == null || subcity.isEmpty()) {
+            subcity = subcityBox.getEditor().getText().trim();
+        }
+        if (woreda == null || woreda.isEmpty()) {
+            woreda = woredaBox.getEditor().getText().trim();
+        }
+        
+        Residency selectedResidency = residencyBox.getValue();
+        
+        if (city.isEmpty()) {
+            showAlert("City is required", Alert.AlertType.WARNING);
             return;
+        }
+        
+        // Validation based on residency type
+        if (selectedResidency == Residency.ADDIS_ABABA) {
+            // For Addis Ababa: must select from the dropdown list
+            if (subcity == null || subcity.isEmpty()) {
+                showAlert("Please select a Subcity from the list", Alert.AlertType.WARNING);
+                return;
+            }
+            // Verify subcity is from the enum
+            boolean validSubcity = false;
+            for (AddisSubcity as : AddisSubcity.values()) {
+                if (as.getDisplayName().equals(subcity)) {
+                    validSubcity = true;
+                    break;
+                }
+            }
+            if (!validSubcity) {
+                showAlert("Please select a valid Subcity from the list", Alert.AlertType.WARNING);
+                return;
+            }
+            if (woreda == null || woreda.isEmpty()) {
+                showAlert("Please select a Woreda from the list", Alert.AlertType.WARNING);
+                return;
+            }
+        } else {
+            // For Sheger/Regional: subcity can be typed, woreda must be positive integer
+            if (subcity == null || subcity.isEmpty()) {
+                showAlert("Subcity is required", Alert.AlertType.WARNING);
+                return;
+            }
+            if (woreda == null || woreda.isEmpty()) {
+                showAlert("Woreda is required", Alert.AlertType.WARNING);
+                return;
+            }
+            // Validate woreda is a positive integer
+            try {
+                int woredaNum = Integer.parseInt(woreda);
+                if (woredaNum <= 0) {
+                    showAlert("Woreda must be a positive integer", Alert.AlertType.WARNING);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                showAlert("Woreda must be a positive integer", Alert.AlertType.WARNING);
+                return;
+            }
         }
         
         try {
             service.submitPhaseOneApplication(
                 student,
                 sponsorshipBox.getValue(),
-                residencyBox.getValue(),
+                selectedResidency,
                 city,
                 subcity,
                 woreda,
@@ -352,6 +424,12 @@ public class StudentController {
         
         if (emergencyName.isEmpty() || emergencyPhone.isEmpty()) {
             showAlert("Emergency contact name and phone are required", Alert.AlertType.WARNING);
+            return;
+        }
+        
+        // Validate phone number: must start with 09 or 07 and have exactly 10 digits
+        if (!emergencyPhone.matches("^(09|07)\\d{8}$")) {
+            showAlert("Phone number must start with 09 or 07 and have exactly 10 digits", Alert.AlertType.WARNING);
             return;
         }
         

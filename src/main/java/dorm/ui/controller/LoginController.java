@@ -55,6 +55,13 @@ public class LoginController {
                 return null;
             }
         });
+        
+        // Add Enter key functionality for login fields
+        loginUsernameField.setOnAction(e -> onLogin());
+        loginPasswordField.setOnAction(e -> onLogin());
+        
+        // Add Enter key functionality for register fields
+        registerConfirmPasswordField.setOnAction(e -> onRegister());
     }
     
     public void setService(DatabaseDormService service) {
@@ -67,17 +74,18 @@ public class LoginController {
         String password = loginPasswordField.getText().trim();
         
         if (username.isEmpty() || password.isEmpty()) {
-            loginStatusLabel.setText("Please enter username and password");
+            showAlert("Please enter username and password");
             return;
         }
         
         Optional<Object> result = service.authenticate(username, password);
         
         if (result.isEmpty()) {
-            loginStatusLabel.setText("Invalid username or password");
+            showAlert("Invalid username or password");
             return;
         }
         
+        loginStatusLabel.setText("");
         navigateToDashboard(result.get());
     }
     
@@ -93,31 +101,31 @@ public class LoginController {
         // Validation
         if (fullName.isEmpty() || studentId.isEmpty() || gender == null || 
             college == null || password.isEmpty()) {
-            registerStatusLabel.setText("All fields are required");
+            showAlert("All fields are required");
             return;
         }
         
         // Validate student ID format
         String idError = service.validateStudentIdFormat(studentId);
         if (idError != null) {
-            registerStatusLabel.setText(idError);
+            showAlert(idError);
             return;
         }
         
         // Check if student ID is available
         if (!service.isStudentIdAvailable(studentId)) {
-            registerStatusLabel.setText("This Student ID is already registered");
+            showAlert("This Student ID is already registered");
             return;
         }
         
         // Password validation
         if (password.length() < 8) {
-            registerStatusLabel.setText("Password must be at least 8 characters");
+            showAlert("Password must be at least 8 characters");
             return;
         }
         
         if (!password.equals(confirmPassword)) {
-            registerStatusLabel.setText("Passwords do not match");
+            showAlert("Passwords do not match");
             return;
         }
         
@@ -134,7 +142,7 @@ public class LoginController {
             navigateToDashboard(student);
             
         } catch (Exception e) {
-            registerStatusLabel.setText("Registration failed: " + e.getMessage());
+            showAlert("Registration failed: " + e.getMessage());
         }
     }
     

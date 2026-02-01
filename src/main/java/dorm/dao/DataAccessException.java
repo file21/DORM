@@ -5,7 +5,7 @@ package dorm.dao;
  * Provides user-friendly error handling instead of crashing with RuntimeException.
  * Demonstrates proper exception handling (OOP best practice).
  */
-public class DataAccessException extends Exception {
+public class DataAccessException extends RuntimeException {
     
     private final String operation;
     private final String resource;

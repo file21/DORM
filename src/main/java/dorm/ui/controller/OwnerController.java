@@ -19,7 +19,7 @@ public class OwnerController extends AdminController {
     @FXML private TableView<User> staffTable;
     @FXML private TableColumn<User, String> staffNameColumn;
     @FXML private TableColumn<User, String> staffUsernameColumn;
-    @FXML private TableColumn<User, String> staffRoleColumn;
+    @FXML private TableColumn<User, String> staffPasswordColumn;
     @FXML private TextField staffNameField;
     @FXML private TextField staffUsernameField;
     @FXML private PasswordField staffPasswordField;
@@ -40,14 +40,36 @@ public class OwnerController extends AdminController {
     }
     
     private void setupStaffTable() {
+        staffTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
         staffNameColumn.setCellValueFactory(cell -> 
             new SimpleStringProperty(cell.getValue().getDisplayName()));
+        centerStaffColumnText(staffNameColumn);
         
         staffUsernameColumn.setCellValueFactory(cell -> 
             new SimpleStringProperty(cell.getValue().getUsername()));
+        centerStaffColumnText(staffUsernameColumn);
         
-        staffRoleColumn.setCellValueFactory(cell -> 
-            new SimpleStringProperty(cell.getValue().getRole().name()));
+        if (staffPasswordColumn != null) {
+            staffPasswordColumn.setCellValueFactory(cell -> 
+                new SimpleStringProperty(cell.getValue().getPassword()));
+            centerStaffColumnText(staffPasswordColumn);
+        }
+    }
+    
+    private void centerStaffColumnText(TableColumn<User, String> column) {
+        column.setCellFactory(tc -> new javafx.scene.control.TableCell<User, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    setStyle("-fx-alignment: CENTER;");
+                }
+            }
+        });
     }
     
     @Override
