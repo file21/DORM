@@ -31,11 +31,12 @@ A JavaFX desktop application for managing dormitory applications and assignments
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Java JDK** | 17, 21, or later | OpenJDK or Oracle JDK |
-| **JavaFX SDK** | 17+ | Must match JDK version |
+| **Java JDK** | 17 or 21 | OpenJDK or Oracle JDK |
+| **Maven** | 3.8+ | For dependency management |
 | **MySQL Server** | 8.0+ | Required for data storage |
-| **MySQL Connector/J** | 8.3.0+ | JDBC driver (auto-downloaded) |
-| **IDE** | IntelliJ IDEA (recommended) | Eclipse/NetBeans also work |
+| **IDE** | IntelliJ IDEA (recommended) | Community or Ultimate Edition |
+
+> **Note**: JavaFX and MySQL Connector are automatically downloaded by Maven.
 
 ---
 
@@ -81,17 +82,18 @@ db.password=your_password_here
 
 1. **Open Project**
    - File → Open → Select this project folder
+   - IntelliJ will detect `pom.xml` and import as Maven project
+   - Wait for Maven to download dependencies
 
-2. **Configure JavaFX** (if not using module system)
-   - File → Project Structure → Libraries → Add JavaFX SDK
-   - Or add VM options: `--module-path /path/to/javafx-sdk/lib --add-modules javafx.controls,javafx.fxml`
+2. **Set Up Database** (see Database Setup section above)
 
-3. **Set Working Directory**
-   - Run → Edit Configurations → Working Directory: `$ProjectFileDir$`
-   - **Important**: The `data/` folder must be accessible from the working directory
-
-4. **Run Application**
-   - Right-click `App.java` → Run 'App.main()'
+3. **Run Application**
+   - Open `src/main/java/dorm/App.java`
+   - Click the green Run button, or right-click → Run 'App.main()'
+   
+   **Or using Maven:**
+   - Open Terminal in IntelliJ (View → Tool Windows → Terminal)
+   - Run: `mvn javafx:run`
 
 ### Option 2: Command Line (Linux/macOS)
 
@@ -99,7 +101,7 @@ db.password=your_password_here
 # Navigate to project root
 cd Dormitory-Management-System
 
-# Compile (downloads MySQL connector automatically if missing)
+# Compile with Maven
 ./compile.sh
 
 # Run
@@ -109,24 +111,19 @@ cd Dormitory-Management-System
 ### Option 3: Command Line (Windows)
 
 ```batch
-# Compile
+# Compile with Maven
 compile.bat
 
 # Run
 run.bat
 ```
 
-Note: You may need to download MySQL Connector/J manually on Windows - see compile.bat for instructions.
-
 ### Option 4: Eclipse
 
-1. Import as Existing Project
-2. Add JavaFX library and MySQL Connector/J to Build Path
-3. Run Configurations → Arguments → VM Arguments:
-   ```
-   --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls
-   ```
-4. Set Working Directory to project root
+1. File → Import → Maven → Existing Maven Projects
+2. Select the project folder
+3. Wait for dependencies to download
+4. Right-click project → Run As → Java Application → Select `dorm.App`
 
 ---
 

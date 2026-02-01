@@ -6,13 +6,13 @@
 <?import javafx.scene.layout.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="dorm.ui.controller.AdminController"
+            fx:controller="dorm.ui.controller.OwnerController"
             stylesheets="@styles.css">
 
     <!-- Header -->
     <top>
         <HBox styleClass="header-bar" alignment="CENTER_LEFT" spacing="20">
-            <Label fx:id="welcomeLabel" text="Admin Dashboard"/>
+            <Label fx:id="welcomeLabel" text="Owner Dashboard"/>
             <Region HBox.hgrow="ALWAYS"/>
             <Button text="Refresh" onAction="#onRefresh"/>
             <Button text="Logout" onAction="#onLogout" styleClass="button-secondary"/>
@@ -23,7 +23,7 @@
     <center>
         <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
             
-            <!-- Applications Tab -->
+            <!-- Applications Tab (same as Admin) -->
             <Tab text="Applications">
                 <VBox spacing="10" styleClass="form-container">
                     
@@ -90,17 +90,51 @@
                 </VBox>
             </Tab>
             
+            <!-- Staff Management Tab (Owner only) -->
+            <Tab text="Staff Management">
+                <VBox spacing="15" styleClass="form-container">
+                    
+                    <Label text="Admin Staff" styleClass="subtitle-label"/>
+                    
+                    <!-- Staff Table -->
+                    <TableView fx:id="staffTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="staffNameColumn" text="Name" prefWidth="200"/>
+                            <TableColumn fx:id="staffUsernameColumn" text="Username" prefWidth="150"/>
+                            <TableColumn fx:id="staffRoleColumn" text="Role" prefWidth="100"/>
+                        </columns>
+                    </TableView>
+                    
+                    <Separator/>
+                    
+                    <!-- Add Staff Form -->
+                    <VBox styleClass="card" spacing="10">
+                        <Label text="Add New Admin" styleClass="header-label"/>
+                        
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <TextField fx:id="staffNameField" promptText="Full Name" HBox.hgrow="ALWAYS"/>
+                            <TextField fx:id="staffUsernameField" promptText="Username" HBox.hgrow="ALWAYS"/>
+                            <PasswordField fx:id="staffPasswordField" promptText="Password" HBox.hgrow="ALWAYS"/>
+                        </HBox>
+                        
+                        <HBox spacing="10">
+                            <Button text="Add Admin" onAction="#onAddStaff" styleClass="button-success"/>
+                            <Button text="Remove Selected" onAction="#onRemoveStaff" styleClass="button-danger"/>
+                        </HBox>
+                    </VBox>
+                    
+                </VBox>
+            </Tab>
+            
             <!-- Announcements Tab -->
             <Tab text="Announcements">
                 <VBox spacing="15" styleClass="form-container">
                     
-                    <!-- Announcement List -->
                     <Label text="Announcements" styleClass="subtitle-label"/>
                     <ListView fx:id="announcementList" VBox.vgrow="ALWAYS" prefHeight="300"/>
                     
                     <Separator/>
                     
-                    <!-- Create/Edit Announcement -->
                     <VBox styleClass="card" spacing="10">
                         <Label fx:id="announcementFormLabel" text="Create Announcement" styleClass="header-label"/>
                         
@@ -129,7 +163,6 @@
             <Tab text="Messages">
                 <VBox spacing="15" styleClass="form-container">
                     
-                    <!-- Messages Table -->
                     <Label text="Received Messages" styleClass="subtitle-label"/>
                     <Label text="Double-click a message to reply" styleClass="info-label"/>
                     <TableView fx:id="messageTable" VBox.vgrow="ALWAYS">
@@ -143,7 +176,6 @@
                     
                     <Separator/>
                     
-                    <!-- Reply Form -->
                     <VBox styleClass="card" spacing="10">
                         <Label text="Reply to Student" styleClass="header-label"/>
                         
@@ -167,14 +199,12 @@
             <Tab text="Search Student">
                 <VBox spacing="20" styleClass="form-container">
                     
-                    <!-- Search Box -->
                     <HBox styleClass="card" spacing="10" alignment="CENTER_LEFT">
                         <Label text="Student ID:" styleClass="form-label"/>
                         <TextField fx:id="searchStudentIdField" promptText="Enter student ID" prefWidth="200"/>
                         <Button text="Search" onAction="#onSearch"/>
                     </HBox>
                     
-                    <!-- Student Details -->
                     <VBox fx:id="searchResultPane" styleClass="card" spacing="15" visible="false">
                         <Label text="Student Details" styleClass="subtitle-label"/>
                         <Separator/>
