@@ -1,6 +1,6 @@
 # Dormitory Management System
 
-A JavaFX desktop application for managing dormitory applications and assignments with CSV file-based data persistence.
+A JavaFX desktop application for managing dormitory applications and assignments with MySQL database persistence.
 
 ## Features
 
@@ -31,9 +31,48 @@ A JavaFX desktop application for managing dormitory applications and assignments
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Java JDK** | 17, 21, or later | OpenJDK or Oracle JDK |
-| **JavaFX SDK** | 17+ | Must match JDK version |
-| **IDE** | IntelliJ IDEA (recommended) | Eclipse/NetBeans also work |
+| **Java JDK** | 17 or 21 | OpenJDK or Oracle JDK |
+| **Maven** | 3.8+ | For dependency management |
+| **MySQL Server** | 8.0+ | Required for data storage |
+| **IDE** | IntelliJ IDEA (recommended) | Community or Ultimate Edition |
+
+> **Note**: JavaFX and MySQL Connector are automatically downloaded by Maven.
+
+---
+
+## Database Setup
+
+Before running the application, you must set up the MySQL database:
+
+### 1. Install MySQL Server
+If you don't have MySQL installed:
+- **Ubuntu/Debian**: `sudo apt-get install mysql-server`
+- **macOS**: `brew install mysql`
+- **Windows**: Download from https://dev.mysql.com/downloads/mysql/
+
+### 2. Initialize the Database
+
+```bash
+# Log into MySQL
+mysql -u root -p
+
+# Run the schema script
+source sql/schema.sql
+```
+
+Or from command line:
+```bash
+mysql -u root -p < sql/schema.sql
+```
+
+### 3. Configure Database Connection
+
+Edit `src/main/resources/dorm/db.properties`:
+```properties
+db.url=jdbc:mysql://localhost:3306/dormitory_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+db.username=root
+db.password=your_password_here
+```
 
 ---
 
@@ -43,42 +82,48 @@ A JavaFX desktop application for managing dormitory applications and assignments
 
 1. **Open Project**
    - File → Open → Select this project folder
+   - IntelliJ will detect `pom.xml` and import as Maven project
+   - Wait for Maven to download dependencies
 
-2. **Configure JavaFX** (if not using module system)
-   - File → Project Structure → Libraries → Add JavaFX SDK
-   - Or add VM options: `--module-path /path/to/javafx-sdk/lib --add-modules javafx.controls,javafx.fxml`
+2. **Set Up Database** (see Database Setup section above)
 
-3. **Set Working Directory**
-   - Run → Edit Configurations → Working Directory: `$ProjectFileDir$`
-   - **Important**: The `data/` folder must be accessible from the working directory
+3. **Run Application**
+   - Open `src/main/java/dorm/App.java`
+   - Click the green Run button, or right-click → Run 'App.main()'
+   
+   **Or using Maven:**
+   - Open Terminal in IntelliJ (View → Tool Windows → Terminal)
+   - Run: `mvn javafx:run`
 
-4. **Run Application**
-   - Right-click `App.java` → Run 'App.main()'
-
-### Option 2: Command Line
+### Option 2: Command Line (Linux/macOS)
 
 ```bash
 # Navigate to project root
-cd Dormitory-Management-V5
+cd Dormitory-Management-System
 
-# Compile (adjust JavaFX path as needed)
-javac --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls \
-      -d out src/main/java/dorm/**/*.java
+# Compile with Maven
+./compile.sh
 
-# Run (must run from project root so data/ folder is accessible)
-java --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls \
-     -cp out dorm.App
+# Run
+./run.sh
 ```
 
-### Option 3: Eclipse
+### Option 3: Command Line (Windows)
 
-1. Import as Existing Project
-2. Add JavaFX library to Build Path
-3. Run Configurations → Arguments → VM Arguments:
-   ```
-   --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls
-   ```
-4. Set Working Directory to project root
+```batch
+# Compile with Maven
+compile.bat
+
+# Run
+run.bat
+```
+
+### Option 4: Eclipse
+
+1. File → Import → Maven → Existing Maven Projects
+2. Select the project folder
+3. Wait for dependencies to download
+4. Right-click project → Run As → Java Application → Select `dorm.App`
 
 ---
 
@@ -88,10 +133,14 @@ java --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls \
 - Ensure JavaFX SDK is downloaded and VM options are set correctly
 - Download from: https://openjfx.io/
 
-### "Data not saving / File not found"
-- Ensure working directory is set to project root
-- The `data/` folder must exist in the current working directory
-- Application will auto-create `data/` folder if missing
+### "Data not saving / Connection refused"
+- Ensure MySQL server is running
+- Check database credentials in `src/main/resources/dorm/db.properties`
+- Verify the `dormitory_db` database exists (run `sql/schema.sql`)
+
+### "MySQL driver not found"
+- Ensure `lib/mysql-connector-j.jar` exists
+- Run `./compile.sh` to auto-download the connector
 
 ### "Class not found" errors
 - Check that all `.java` files are compiled
@@ -99,20 +148,28 @@ java --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls \
 
 ---
 
-## Important: Working Directory
+## Important: Database Configuration
 
-**The application must run from the project root directory.**
+**The application requires a running MySQL server.**
 
-The CSV files are stored in `data/` relative to the working directory:
+The database connection is configured in `src/main/resources/dorm/db.properties`:
 ```
-project-root/          ← Run from here
-├── data/              ← Auto-created, stores CSV files
+project-root/
+├── lib/                      ← MySQL Connector JAR
+├── sql/                      ← Database schema
+│   └── schema.sql
 ├── src/
-│   └── main/java/dorm/
+│   └── main/
+│       ├── java/dorm/
+│       └── resources/dorm/
+│           └── db.properties ← Database configuration
 └── README.md
 ```
 
-If you get "file not found" errors, check your IDE's Run Configuration to ensure the working directory is set correctly.
+If you get connection errors, check:
+1. MySQL server is running
+2. Database credentials are correct in `db.properties`
+3. The `dormitory_db` database exists
 
 ## Default Login Credentials
 
@@ -129,7 +186,9 @@ src/main/java/dorm/
 ├── App.java                    # Main entry point (JavaFX Application)
 ├── dao/                        # Data Access Layer (Repository Pattern)
 │   ├── *Repository.java        # Repository interfaces (abstraction)
-│   ├── Csv*Repository.java     # CSV implementations
+│   ├── MySql*Repository.java   # MySQL implementations (active)
+│   ├── Csv*Repository.java     # CSV implementations (legacy/backup)
+│   ├── DatabaseConnection.java # MySQL connection manager
 │   ├── DaoFactory.java         # Factory for creating repositories
 │   └── DataAccessException.java # Custom exception (proper error handling)
 ├── model/                      # Domain Models (Encapsulation)
@@ -157,12 +216,11 @@ src/main/java/dorm/
 └── util/                       # Utilities
     └── CsvHelper.java          # CSV file operations
 
-data/                           # CSV data files (auto-created)
-├── users.csv
-├── students.csv
-├── applications.csv
-├── announcements.csv
-└── messages.csv
+sql/                            # Database schema
+└── schema.sql                  # MySQL initialization script
+
+lib/                            # External libraries
+└── mysql-connector-j.jar       # MySQL JDBC driver (auto-downloaded)
 ```
 
 ## Architecture & Design Patterns
@@ -181,7 +239,7 @@ data/                           # CSV data files (auto-created)
 | Principle | Implementation |
 |-----------|---------------|
 | **SRP** | Repositories handle data, Service handles logic, UI handles display |
-| **OCP** | New repository implementations (e.g., SQL) can be added without modifying existing code |
+| **OCP** | MySQL implementations added without modifying service layer; CSV can be swapped back easily |
 | **LSP** | Student can substitute for User where applicable |
 | **ISP** | Small, focused repository interfaces |
 | **DIP** | Service depends on repository interfaces, not concrete implementations |

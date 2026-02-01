@@ -1,17 +1,94 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
-<VBox spacing="10" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="dorm.ui.controller.LoginController">
-    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="dorm.ui.controller.LoginController"
+           styleClass="login-container" stylesheets="@styles.css">
 
-    <Label text="Dorm Management Login" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
-    <TextField fx:id="usernameField" promptText="Username"/>
-    <PasswordField fx:id="passwordField" promptText="Password"/>
-
-    <Button text="Login" onAction="#onLogin"/>
-    <Label fx:id="statusLabel" text=""/>
-</VBox>
+    <VBox alignment="CENTER" spacing="20" styleClass="login-card" maxWidth="450">
+        
+        <!-- Title -->
+        <Label text="Dormitory Management" styleClass="login-title"/>
+        <Label text="Student Housing System" styleClass="info-label"/>
+        
+        <Separator/>
+        
+        <!-- Tab Pane for Login/Register -->
+        <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE">
+            
+            <!-- Login Tab -->
+            <Tab text="Login">
+                <VBox spacing="15" styleClass="form-container">
+                    
+                    <VBox spacing="5">
+                        <Label text="Student ID / Username" styleClass="form-label"/>
+                        <TextField fx:id="loginUsernameField" promptText="e.g., UGR/1234/16"/>
+                    </VBox>
+                    
+                    <VBox spacing="5">
+                        <Label text="Password" styleClass="form-label"/>
+                        <PasswordField fx:id="loginPasswordField" promptText="Enter password"/>
+                    </VBox>
+                    
+                    <Button text="Login" onAction="#onLogin" maxWidth="Infinity" styleClass="button"/>
+                    
+                    <Label fx:id="loginStatusLabel" styleClass="info-label" textFill="red"/>
+                    
+                </VBox>
+            </Tab>
+            
+            <!-- Register Tab -->
+            <Tab text="Register">
+                <ScrollPane fitToWidth="true" fitToHeight="true">
+                    <VBox spacing="15" styleClass="form-container">
+                        
+                        <VBox spacing="5">
+                            <Label text="Full Name" styleClass="form-label"/>
+                            <TextField fx:id="registerNameField" promptText="Enter your full name"/>
+                        </VBox>
+                        
+                        <VBox spacing="5">
+                            <Label text="Student ID (will be your username)" styleClass="form-label"/>
+                            <TextField fx:id="registerStudentIdField" promptText="UGR/XXXX/YY"/>
+                            <Label text="Format: UGR/1234/16" styleClass="info-label"/>
+                        </VBox>
+                        
+                        <HBox spacing="15">
+                            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                <Label text="Gender" styleClass="form-label"/>
+                                <ComboBox fx:id="registerGenderBox" maxWidth="Infinity"/>
+                            </VBox>
+                            
+                            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                <Label text="College" styleClass="form-label"/>
+                                <ComboBox fx:id="registerCollegeBox" maxWidth="Infinity"/>
+                            </VBox>
+                        </HBox>
+                        
+                        <VBox spacing="5">
+                            <Label text="Password (min 8 characters)" styleClass="form-label"/>
+                            <PasswordField fx:id="registerPasswordField" promptText="Create a password"/>
+                        </VBox>
+                        
+                        <VBox spacing="5">
+                            <Label text="Confirm Password" styleClass="form-label"/>
+                            <PasswordField fx:id="registerConfirmPasswordField" promptText="Confirm password"/>
+                        </VBox>
+                        
+                        <Button text="Create Account" onAction="#onRegister" maxWidth="Infinity" styleClass="button-success"/>
+                        
+                        <Label fx:id="registerStatusLabel" styleClass="info-label" textFill="red"/>
+                        
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+            
+        </TabPane>
+        
+    </VBox>
+    
+</StackPane>

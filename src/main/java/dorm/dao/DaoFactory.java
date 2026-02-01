@@ -2,6 +2,7 @@ package dorm.dao;
 
 /**
  * Factory class for creating DAO instances.
+ * Uses MySQL implementations for data persistence.
  */
 public class DaoFactory {
     
@@ -13,36 +14,47 @@ public class DaoFactory {
     
     public static UserRepository createUserRepository() {
         if (userRepository == null) {
-            userRepository = new CsvUserRepository();
+            userRepository = new MySqlUserRepository();
         }
         return userRepository;
     }
     
     public static StudentRepository createStudentRepository() {
         if (studentRepository == null) {
-            studentRepository = new CsvStudentRepository();
+            studentRepository = new MySqlStudentRepository();
         }
         return studentRepository;
     }
     
     public static ApplicationRepository createApplicationRepository() {
         if (applicationRepository == null) {
-            applicationRepository = new CsvApplicationRepository(createStudentRepository());
+            applicationRepository = new MySqlApplicationRepository(createStudentRepository());
         }
         return applicationRepository;
     }
     
     public static AnnouncementRepository createAnnouncementRepository() {
         if (announcementRepository == null) {
-            announcementRepository = new CsvAnnouncementRepository();
+            announcementRepository = new MySqlAnnouncementRepository();
         }
         return announcementRepository;
     }
     
     public static MessageRepository createMessageRepository() {
         if (messageRepository == null) {
-            messageRepository = new CsvMessageRepository();
+            messageRepository = new MySqlMessageRepository();
         }
         return messageRepository;
+    }
+    
+    /**
+     * Reset all repositories (useful for testing)
+     */
+    public static void reset() {
+        userRepository = null;
+        studentRepository = null;
+        applicationRepository = null;
+        announcementRepository = null;
+        messageRepository = null;
     }
 }

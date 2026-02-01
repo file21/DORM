@@ -1,28 +1,24 @@
 #!/bin/bash
 
-# Simple run script for Dormitory Management System
-# Requires: JDK 21+ with JavaFX
+# Run script for Dormitory Management System
+# Uses Maven with JavaFX plugin
 
 echo "Starting Dormitory Management System..."
 
-# Find JavaFX path (adjust this path based on your JavaFX installation)
-JAVAFX_PATH="/usr/share/openjfx/lib"
-
-# Check if JavaFX path exists
-if [ ! -d "$JAVAFX_PATH" ]; then
-    echo "JavaFX not found at $JAVAFX_PATH"
-    echo "Please install JavaFX or update JAVAFX_PATH in this script"
-    exit 1
-fi
-
-# Check if compiled classes exist
-if [ ! -d "out" ]; then
-    echo "No compiled classes found. Run ./compile.sh first"
+# Check if Maven is installed
+if ! command -v mvn &> /dev/null; then
+    echo "Maven is not installed!"
+    echo "Please install Maven first."
     exit 1
 fi
 
 # Run the application
-java --module-path "$JAVAFX_PATH" \
-     --add-modules javafx.controls,javafx.fxml \
-     -cp out \
-     dorm.App
+mvn javafx:run -q
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "Failed to start. Please check:"
+    echo "  1. MySQL server is running"
+    echo "  2. Database credentials in src/main/resources/dorm/db.properties are correct"
+    echo "  3. Run: mysql -u root -p < sql/schema.sql to create the database"
+fi

@@ -1,9 +1,189 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.geometry.Insets?>
+
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="10" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
-    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
-    <Label text="student_dashboard.fxml (placeholder)"/>
-</VBox>
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="dorm.ui.controller.StudentController"
+            stylesheets="@styles.css">
+
+    <!-- Header -->
+    <top>
+        <HBox styleClass="header-bar" alignment="CENTER_LEFT" spacing="20">
+            <Label fx:id="welcomeLabel" text="Welcome, Student"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Refresh" onAction="#onRefresh"/>
+            <Button text="Logout" onAction="#onLogout" styleClass="button-secondary"/>
+        </HBox>
+    </top>
+
+    <!-- Main Content -->
+    <center>
+        <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
+            
+            <!-- Profile Tab -->
+            <Tab text="My Profile">
+                <ScrollPane fitToWidth="true">
+                    <VBox spacing="20" styleClass="form-container">
+                        
+                        <VBox styleClass="card" spacing="10">
+                            <Label text="Student Information" styleClass="subtitle-label"/>
+                            <Separator/>
+                            
+                            <GridPane hgap="15" vgap="10">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="120"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                </columnConstraints>
+                                
+                                <Label text="Name:" styleClass="form-label" GridPane.rowIndex="0"/>
+                                <Label fx:id="profileNameLabel" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                
+                                <Label text="Student ID:" styleClass="form-label" GridPane.rowIndex="1"/>
+                                <Label fx:id="profileStudentIdLabel" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                
+                                <Label text="Gender:" styleClass="form-label" GridPane.rowIndex="2"/>
+                                <Label fx:id="profileGenderLabel" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                
+                                <Label text="College:" styleClass="form-label" GridPane.rowIndex="3"/>
+                                <Label fx:id="profileCollegeLabel" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                
+                                <Label text="Sponsorship:" styleClass="form-label" GridPane.rowIndex="4"/>
+                                <Label fx:id="profileSponsorshipLabel" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                                
+                                <Label text="Building:" styleClass="form-label" GridPane.rowIndex="5"/>
+                                <Label fx:id="profileBuildingLabel" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                                
+                                <Label text="Status:" styleClass="form-label" GridPane.rowIndex="6"/>
+                                <Label fx:id="profileStatusLabel" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+                            </GridPane>
+                        </VBox>
+                        
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+            
+            <!-- Phase 1 Application Tab -->
+            <Tab text="Phase 1 Application">
+                <ScrollPane fitToWidth="true">
+                    <VBox spacing="20" styleClass="form-container">
+                        
+                        <VBox styleClass="card" spacing="15">
+                            <Label text="Sponsorship &amp; Address Information" styleClass="subtitle-label"/>
+                            <Label fx:id="phase1StatusLabel" styleClass="info-label"/>
+                            <Separator/>
+                            
+                            <GridPane hgap="15" vgap="15">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="150"/>
+                                    <ColumnConstraints hgrow="ALWAYS" minWidth="200"/>
+                                </columnConstraints>
+                                
+                                <Label text="Sponsorship Type:" styleClass="form-label" GridPane.rowIndex="0"/>
+                                <ComboBox fx:id="sponsorshipBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                
+                                <Label text="Residency:" styleClass="form-label" GridPane.rowIndex="1"/>
+                                <ComboBox fx:id="residencyBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                
+                                <Label text="City:" styleClass="form-label" GridPane.rowIndex="2"/>
+                                <TextField fx:id="cityField" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                
+                                <Label text="Subcity:" styleClass="form-label" GridPane.rowIndex="3"/>
+                                <ComboBox fx:id="subcityBox" editable="true" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                
+                                <Label text="Woreda:" styleClass="form-label" GridPane.rowIndex="4"/>
+                                <ComboBox fx:id="woredaBox" editable="true" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                                
+                                <Label text="Disability Info:" styleClass="form-label" GridPane.rowIndex="5"/>
+                                <TextField fx:id="disabilityField" promptText="Optional" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                            </GridPane>
+                            
+                            <HBox spacing="10">
+                                <Button fx:id="submitPhase1Btn" text="Submit Phase 1" onAction="#onSubmitPhase1" styleClass="button-success"/>
+                            </HBox>
+                            
+                            <Label fx:id="phase1NoteLabel" wrapText="true" styleClass="info-label"/>
+                        </VBox>
+                        
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+            
+            <!-- Phase 2 Application Tab -->
+            <Tab fx:id="phase2Tab" text="Phase 2 Application">
+                <ScrollPane fitToWidth="true">
+                    <VBox spacing="20" styleClass="form-container">
+                        
+                        <VBox styleClass="card" spacing="15">
+                            <Label text="Emergency Contact &amp; Payment" styleClass="subtitle-label"/>
+                            <Label fx:id="phase2StatusLabel" styleClass="info-label"/>
+                            <Separator/>
+                            
+                            <GridPane hgap="15" vgap="15">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="180"/>
+                                    <ColumnConstraints hgrow="ALWAYS" minWidth="200"/>
+                                </columnConstraints>
+                                
+                                <Label text="Emergency Contact Name:" styleClass="form-label" GridPane.rowIndex="0"/>
+                                <TextField fx:id="emergencyNameField" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                
+                                <Label text="Emergency Contact Phone:" styleClass="form-label" GridPane.rowIndex="1"/>
+                                <TextField fx:id="emergencyPhoneField" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                
+                                <Label text="Transaction ID:" styleClass="form-label" GridPane.rowIndex="2"/>
+                                <TextField fx:id="transactionIdField" promptText="For self-sponsored students" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                            </GridPane>
+                            
+                            <HBox spacing="10">
+                                <Button fx:id="submitPhase2Btn" text="Submit Phase 2" onAction="#onSubmitPhase2" styleClass="button-success"/>
+                            </HBox>
+                        </VBox>
+                        
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+            
+            <!-- Announcements Tab -->
+            <Tab text="Announcements">
+                <VBox spacing="10" styleClass="form-container">
+                    <Label text="Latest Announcements" styleClass="subtitle-label"/>
+                    <ListView fx:id="announcementList" VBox.vgrow="ALWAYS"/>
+                </VBox>
+            </Tab>
+            
+            <!-- Messages Tab -->
+            <Tab text="Messages">
+                <VBox spacing="15" styleClass="form-container">
+                    
+                    <!-- Send Message -->
+                    <VBox styleClass="card" spacing="10">
+                        <Label text="Send Message to Admin" styleClass="subtitle-label"/>
+                        <Separator/>
+                        
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="To:" styleClass="form-label"/>
+                            <ComboBox fx:id="messageRecipientBox" promptText="Select admin" HBox.hgrow="ALWAYS"/>
+                        </HBox>
+                        
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <TextField fx:id="messageField" promptText="Type your message (max 80 characters)" HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="charCountLabel" text="0/80" styleClass="info-label"/>
+                            <Button text="Send" onAction="#onSendMessage"/>
+                        </HBox>
+                    </VBox>
+                    
+                    <!-- Received Messages -->
+                    <VBox spacing="10" VBox.vgrow="ALWAYS">
+                        <Label text="Messages" styleClass="subtitle-label"/>
+                        <ListView fx:id="messageList" VBox.vgrow="ALWAYS"/>
+                    </VBox>
+                    
+                </VBox>
+            </Tab>
+            
+        </TabPane>
+    </center>
+
+</BorderPane>

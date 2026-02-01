@@ -1,47 +1,38 @@
 #!/bin/bash
 
-# Simple compile script for Dormitory Management System
-# Requires: JDK 21+ with JavaFX
+# Compile script for Dormitory Management System
+# Uses Maven for dependency management
 
-echo "Compiling Dormitory Management System..."
+echo "==================================="
+echo "Dormitory Management System"
+echo "==================================="
 
-# Create output directory
-mkdir -p out
-
-# Find JavaFX path (adjust this path based on your JavaFX installation)
-# Common locations:
-#   Linux: /usr/share/openjfx/lib
-#   macOS: /opt/homebrew/opt/openjfx/libexec/lib
-#   Windows: C:\javafx-sdk-21\lib
-
-JAVAFX_PATH="/usr/share/openjfx/lib"
-
-# Check if JavaFX path exists
-if [ ! -d "$JAVAFX_PATH" ]; then
-    echo "JavaFX not found at $JAVAFX_PATH"
-    echo "Please install JavaFX or update JAVAFX_PATH in this script"
+# Check if Maven is installed
+if ! command -v mvn &> /dev/null; then
+    echo "Maven is not installed!"
     echo ""
-    echo "To install on Ubuntu/Debian:"
-    echo "  sudo apt-get install openjfx"
+    echo "Please install Maven:"
+    echo "  Ubuntu/Debian: sudo apt-get install maven"
+    echo "  macOS: brew install maven"
     echo ""
     exit 1
 fi
 
-# Compile all Java files
-javac --module-path "$JAVAFX_PATH" \
-      --add-modules javafx.controls,javafx.fxml \
-      -d out \
-      src/main/java/dorm/*.java \
-      src/main/java/dorm/dao/*.java \
-      src/main/java/dorm/model/*.java \
-      src/main/java/dorm/service/*.java \
-      src/main/java/dorm/ui/*.java \
-      src/main/java/dorm/util/*.java
+echo "Compiling with Maven..."
+mvn clean compile -q
 
 if [ $? -eq 0 ]; then
+    echo ""
     echo "Compilation successful!"
+    echo ""
+    echo "Before running, make sure MySQL is configured:"
+    echo "  1. Start MySQL server"
+    echo "  2. Run: mysql -u root -p < sql/schema.sql"
+    echo "  3. Update database credentials in src/main/resources/dorm/db.properties"
+    echo ""
     echo "Run with: ./run.sh"
 else
+    echo ""
     echo "Compilation failed!"
     exit 1
 fi

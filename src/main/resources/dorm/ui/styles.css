@@ -1,0 +1,318 @@
+/* Dormitory Management System - Main Stylesheet */
+
+/* === Root Variables === */
+.root {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: #f5f5f5;
+    
+    /* Color palette */
+    -primary-color: #2196F3;
+    -primary-dark: #1976D2;
+    -primary-light: #BBDEFB;
+    -accent-color: #FF9800;
+    -success-color: #4CAF50;
+    -warning-color: #FFC107;
+    -danger-color: #f44336;
+    -text-primary: #212121;
+    -text-secondary: #757575;
+    -background-color: #FAFAFA;
+    -card-background: #FFFFFF;
+    -border-color: #E0E0E0;
+}
+
+/* === Common Components === */
+.label {
+    -fx-text-fill: -text-primary;
+}
+
+.title-label {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -primary-color;
+}
+
+.subtitle-label {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-primary;
+}
+
+.header-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.info-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: -text-secondary;
+}
+
+/* === Buttons === */
+.button {
+    -fx-background-color: -primary-color;
+    -fx-text-fill: white;
+    -fx-padding: 8 16;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: -primary-dark;
+}
+
+.button:pressed {
+    -fx-background-color: derive(-primary-dark, -10%);
+}
+
+.button-success {
+    -fx-background-color: -success-color;
+}
+
+.button-success:hover {
+    -fx-background-color: derive(-success-color, -10%);
+}
+
+.button-danger {
+    -fx-background-color: -danger-color;
+}
+
+.button-danger:hover {
+    -fx-background-color: derive(-danger-color, -10%);
+}
+
+.button-warning {
+    -fx-background-color: -warning-color;
+    -fx-text-fill: -text-primary;
+}
+
+.button-warning:hover {
+    -fx-background-color: derive(-warning-color, -10%);
+}
+
+.button-secondary {
+    -fx-background-color: #9E9E9E;
+}
+
+.button-secondary:hover {
+    -fx-background-color: #757575;
+}
+
+/* === Text Fields === */
+.text-field, .password-field, .text-area {
+    -fx-background-color: white;
+    -fx-border-color: -border-color;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 8;
+}
+
+.text-field:focused, .password-field:focused, .text-area:focused {
+    -fx-border-color: -primary-color;
+    -fx-border-width: 2;
+}
+
+/* === Combo Boxes === */
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: -border-color;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.combo-box:focused {
+    -fx-border-color: -primary-color;
+}
+
+/* === Tables === */
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: -border-color;
+}
+
+.table-view .column-header {
+    -fx-background-color: -primary-light;
+    -fx-font-weight: bold;
+}
+
+.table-view .table-row-cell:odd {
+    -fx-background-color: #FAFAFA;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: -primary-light;
+}
+
+/* === Tab Pane === */
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: white;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: #E0E0E0;
+    -fx-background-radius: 4 4 0 0;
+    -fx-padding: 8 16;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: -primary-color;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: white;
+}
+
+/* === Cards === */
+.card {
+    -fx-background-color: -card-background;
+    -fx-background-radius: 8;
+    -fx-border-color: -border-color;
+    -fx-border-radius: 8;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);
+}
+
+/* === Header Bar === */
+.header-bar {
+    -fx-background-color: -primary-color;
+    -fx-padding: 12 20;
+}
+
+.header-bar .label {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.header-bar .button {
+    -fx-background-color: white;
+    -fx-text-fill: -primary-color;
+}
+
+.header-bar .button:hover {
+    -fx-background-color: #E3F2FD;
+}
+
+/* === List Views === */
+.list-view {
+    -fx-background-color: white;
+    -fx-border-color: -border-color;
+}
+
+.list-cell:filled:selected {
+    -fx-background-color: -primary-light;
+}
+
+/* === Scroll Pane === */
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* === Status Labels === */
+.status-pending {
+    -fx-text-fill: -warning-color;
+    -fx-font-weight: bold;
+}
+
+.status-approved {
+    -fx-text-fill: -success-color;
+    -fx-font-weight: bold;
+}
+
+.status-declined {
+    -fx-text-fill: -danger-color;
+    -fx-font-weight: bold;
+}
+
+.status-assigned {
+    -fx-text-fill: -primary-color;
+    -fx-font-weight: bold;
+}
+
+/* === Form Layout === */
+.form-container {
+    -fx-padding: 20;
+    -fx-spacing: 15;
+}
+
+.form-row {
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+}
+
+.form-label {
+    -fx-min-width: 150;
+    -fx-font-weight: bold;
+}
+
+/* === Announcement Cards === */
+.announcement-card {
+    -fx-background-color: white;
+    -fx-border-color: -border-color;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 12;
+    -fx-spacing: 8;
+}
+
+.announcement-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-primary;
+}
+
+.announcement-date {
+    -fx-font-size: 11px;
+    -fx-text-fill: -text-secondary;
+}
+
+/* === Message Styling === */
+.message-received {
+    -fx-background-color: #E3F2FD;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+}
+
+.message-sent {
+    -fx-background-color: #E8F5E9;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+}
+
+/* === Filter Panel === */
+.filter-panel {
+    -fx-background-color: white;
+    -fx-border-color: -border-color;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 10;
+}
+
+/* === Login Page === */
+.login-container {
+    -fx-background-color: linear-gradient(to bottom right, -primary-color, -primary-dark);
+    -fx-alignment: center;
+}
+
+.login-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-padding: 40;
+    -fx-min-width: 400;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 20, 0, 0, 10);
+}
+
+.login-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -primary-color;
+}
+
+/* === Separator === */
+.separator {
+    -fx-background-color: -border-color;
+}
