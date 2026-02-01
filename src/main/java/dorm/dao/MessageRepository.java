@@ -18,4 +18,9 @@ public interface MessageRepository {
      * Save a new message
      */
     void save(Message message);
+    
+    /**
+     * Update an existing message (e.g., mark as read)
+     */
+    void update(Message message);
 }

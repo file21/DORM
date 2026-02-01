@@ -5,78 +5,114 @@ A JavaFX desktop application for managing dormitory applications and assignments
 ## Features
 
 ### For Students
-- Account registration and login
+- Account registration with ID validation (format: UGR/XXXX/YY)
+- Student ID serves as username for simpler login
 - Two-phase application system:
-  - **Phase One**: Sponsorship type, residency, address (city, subcity, woreda)
-  - **Phase Two**: Mother's info, emergency contact, transaction ID (unlocked after Phase One approval)
-- View application status
+  - **Phase 1**: Sponsorship type, residency, address (Addis Ababa residents get dropdown selection)
+  - **Phase 2**: Emergency contact, transaction ID (unlocked after Phase 1 approval)
+- View announcements and messages from admin
+- Send messages to admin (max 80 characters)
 
 ### For Admins
-- Review applications with checkbox selection
-- Bulk approve/decline/request resubmit
+- Filter applications by gender, residency, subcity, woreda, college, sponsorship, status
+- Bulk approve/decline/request resubmit (with reason sent as message)
 - Assign buildings to approved students
 - Export selected students to CSV
-- Post announcements
-- Message students
+- Post/edit/delete announcements
+- Message students with read tracking
 
 ### For Owners
 - All admin capabilities
 - Manage admin staff accounts
 
-## Application Flow
-
-1. **Registration**: Students create account with name, ID, gender, college (8+ char password)
-2. **Phase One**: Fill sponsorship, residency, address info
-3. **Admin Review**: Approve, decline, or request resubmit
-4. **Phase Two**: (After Phase One approval) Fill mother's info, emergency contact, transaction ID
-5. **Building Assignment**: Admin assigns building to approved students
+---
 
 ## Requirements
 
-- **Java JDK 21** or later
-- **JavaFX 21** (OpenJFX)
+| Component | Version | Notes |
+|-----------|---------|-------|
+| **Java JDK** | 17, 21, or later | OpenJDK or Oracle JDK |
+| **JavaFX SDK** | 17+ | Must match JDK version |
+| **IDE** | IntelliJ IDEA (recommended) | Eclipse/NetBeans also work |
 
-## Installation
+---
 
-### Step 1: Install Java JDK 21
+## Quick Start
 
-**Ubuntu/Debian:**
-```bash
-sudo apt-get update
-sudo apt-get install openjdk-21-jdk
-```
+### Option 1: IntelliJ IDEA (Recommended)
 
-**Windows/macOS:**
-Download from https://adoptium.net/
+1. **Open Project**
+   - File → Open → Select this project folder
 
-### Step 2: Install JavaFX
+2. **Configure JavaFX** (if not using module system)
+   - File → Project Structure → Libraries → Add JavaFX SDK
+   - Or add VM options: `--module-path /path/to/javafx-sdk/lib --add-modules javafx.controls,javafx.fxml`
 
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install openjfx
-```
+3. **Set Working Directory**
+   - Run → Edit Configurations → Working Directory: `$ProjectFileDir$`
+   - **Important**: The `data/` folder must be accessible from the working directory
 
-**Windows/macOS:**
-1. Download JavaFX SDK from https://openjfx.io/
-2. Extract to a folder
-3. Update `JAVAFX_PATH` in compile.sh/compile.bat
+4. **Run Application**
+   - Right-click `App.java` → Run 'App.main()'
 
-## How to Compile and Run
-
-### Linux/macOS
+### Option 2: Command Line
 
 ```bash
-chmod +x compile.sh run.sh
-./compile.sh
-./run.sh
+# Navigate to project root
+cd Dormitory-Management-V5
+
+# Compile (adjust JavaFX path as needed)
+javac --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls \
+      -d out src/main/java/dorm/**/*.java
+
+# Run (must run from project root so data/ folder is accessible)
+java --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls \
+     -cp out dorm.App
 ```
 
-### Windows
+### Option 3: Eclipse
 
-```cmd
-compile.bat
-run.bat
+1. Import as Existing Project
+2. Add JavaFX library to Build Path
+3. Run Configurations → Arguments → VM Arguments:
+   ```
+   --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls
+   ```
+4. Set Working Directory to project root
+
+---
+
+## Troubleshooting
+
+### "Error: JavaFX runtime components are missing"
+- Ensure JavaFX SDK is downloaded and VM options are set correctly
+- Download from: https://openjfx.io/
+
+### "Data not saving / File not found"
+- Ensure working directory is set to project root
+- The `data/` folder must exist in the current working directory
+- Application will auto-create `data/` folder if missing
+
+### "Class not found" errors
+- Check that all `.java` files are compiled
+- Verify package structure matches folder structure
+
+---
+
+## Important: Working Directory
+
+**The application must run from the project root directory.**
+
+The CSV files are stored in `data/` relative to the working directory:
 ```
+project-root/          ← Run from here
+├── data/              ← Auto-created, stores CSV files
+├── src/
+│   └── main/java/dorm/
+└── README.md
+```
+
+If you get "file not found" errors, check your IDE's Run Configuration to ensure the working directory is set correctly.
 
 ## Default Login Credentials
 
@@ -86,32 +122,42 @@ run.bat
 | Owner   | owner    | owner123  |
 | Student | student1 | pass1234  |
 
-**Note:** New student passwords must be at least 8 characters.
-
 ## Project Structure
 
 ```
 src/main/java/dorm/
-├── App.java                 # Main entry point
-├── dao/                     # Data Access Objects
-├── model/                   # Data models
-│   ├── Student.java
-│   ├── Gender.java
-│   ├── College.java         # 9 AAU colleges with full name and acronym
-│   ├── Residency.java       # ADDIS_ABABA, SHEGER_CITY, REGIONAL
-│   ├── SponsorshipType.java # GOVERNMENT, SELF_SPONSORED
-│   └── ...
-├── service/
-│   └── DatabaseDormService.java
-├── ui/
-│   ├── LoginViewDb.java
-│   ├── StudentDashboardDb.java
-│   ├── AdminDashboardDb.java
-│   └── OwnerDashboardDb.java
-└── util/
-    └── CsvHelper.java
+├── App.java                    # Main entry point (JavaFX Application)
+├── dao/                        # Data Access Layer (Repository Pattern)
+│   ├── *Repository.java        # Repository interfaces (abstraction)
+│   ├── Csv*Repository.java     # CSV implementations
+│   ├── DaoFactory.java         # Factory for creating repositories
+│   └── DataAccessException.java # Custom exception (proper error handling)
+├── model/                      # Domain Models (Encapsulation)
+│   ├── Student.java            # Extends User (Inheritance)
+│   ├── User.java               # Base user class
+│   ├── DormApplication.java    # Application entity
+│   ├── Announcement.java       # Announcement entity
+│   ├── Message.java            # Message entity
+│   └── *.java                  # Enums (Gender, Role, College, etc.)
+├── service/                    # Business Logic Layer
+│   └── DatabaseDormService.java # Service facade (DIP - depends on interfaces)
+├── ui/                         # Presentation Layer (JavaFX)
+│   ├── LoginViewDb.java        # Login/Registration screen
+│   ├── StudentDashboardDb.java # Student dashboard
+│   ├── AdminDashboardDb.java   # Admin dashboard
+│   ├── OwnerDashboardDb.java   # Owner dashboard
+│   └── components/             # Reusable UI components (SRP)
+│       ├── ApplicationTableBuilder.java
+│       ├── ApplicationFilterPane.java
+│       ├── ApplicationActionsPane.java
+│       ├── AnnouncementPane.java
+│       ├── MessagePane.java
+│       ├── StudentSearchPane.java
+│       └── ExportUtil.java
+└── util/                       # Utilities
+    └── CsvHelper.java          # CSV file operations
 
-data/                        # CSV data files
+data/                           # CSV data files (auto-created)
 ├── users.csv
 ├── students.csv
 ├── applications.csv
@@ -119,12 +165,40 @@ data/                        # CSV data files
 └── messages.csv
 ```
 
-## Troubleshooting
+## Architecture & Design Patterns
 
-### JavaFX paths:
-- **Ubuntu/Debian:** `/usr/share/openjfx/lib`
-- **macOS (Homebrew):** `/opt/homebrew/opt/openjfx/libexec/lib`
-- **Windows:** `C:\javafx-sdk-21\lib`
+### OOP Principles Applied
+
+| Principle | Implementation |
+|-----------|---------------|
+| **Encapsulation** | Private fields with getters/setters in all model classes |
+| **Abstraction** | Repository interfaces hide implementation details |
+| **Inheritance** | `Student extends User` with meaningful specialization |
+| **Polymorphism** | Repository interfaces with CSV implementations |
+
+### SOLID Principles Applied
+
+| Principle | Implementation |
+|-----------|---------------|
+| **SRP** | Repositories handle data, Service handles logic, UI handles display |
+| **OCP** | New repository implementations (e.g., SQL) can be added without modifying existing code |
+| **LSP** | Student can substitute for User where applicable |
+| **ISP** | Small, focused repository interfaces |
+| **DIP** | Service depends on repository interfaces, not concrete implementations |
+
+### Design Patterns
+
+- **Repository Pattern**: Abstract data access behind interfaces
+- **Factory Pattern**: `DaoFactory` creates repository instances
+- **MVC-like**: Model (entities), View (JavaFX UI), Controller (Service)
+
+## Application Flow
+
+1. **Registration**: Student creates account (8+ char password, valid student ID)
+2. **Phase 1**: Fill sponsorship, residency, address
+3. **Admin Review**: Approve, decline, or request resubmit (with reason)
+4. **Phase 2**: Fill emergency contact, transaction ID (if self-sponsored)
+5. **Building Assignment**: Admin assigns building
 
 ## License
 

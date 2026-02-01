@@ -49,6 +49,80 @@ public class DatabaseDormService {
     
     // ========== Student Management ==========
     
+    /**
+     * Check if a username is already taken by any user or student
+     */
+    public boolean isUsernameAvailable(String username) {
+        // Check in users
+        if (userRepository.findByUsername(username).isPresent()) {
+            return false;
+        }
+        
+        // Check in students
+        for (Student s : studentRepository.findAll()) {
+            if (s.getUsername().equals(username)) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Check if a student ID is already registered
+     */
+    public boolean isStudentIdAvailable(String studentId) {
+        return studentRepository.findByStudentId(studentId).isEmpty();
+    }
+    
+    /**
+     * Validate student ID format: UGR/XXXX/YY
+     * - Must start with "UGR/"
+     * - Followed by exactly 4 digits
+     * - Then "/"
+     * - Then exactly 2 digits (year)
+     * Uses only basic string operations (no regex)
+     */
+    public String validateStudentIdFormat(String studentId) {
+        if (studentId == null || studentId.isEmpty()) {
+            return "Student ID cannot be empty";
+        }
+        
+        // Check length: UGR/XXXX/YY = 11 characters
+        if (studentId.length() != 11) {
+            return "Student ID must be exactly 11 characters (format: UGR/XXXX/YY)";
+        }
+        
+        // Check prefix "UGR/"
+        String prefix = studentId.substring(0, 4);
+        if (!prefix.equals("UGR/")) {
+            return "Student ID must start with 'UGR/'";
+        }
+        
+        // Check 4 digits after prefix (positions 4-7)
+        for (int i = 4; i < 8; i++) {
+            char c = studentId.charAt(i);
+            if (c < '0' || c > '9') {
+                return "Student ID must have 4 digits after 'UGR/' (format: UGR/XXXX/YY)";
+            }
+        }
+        
+        // Check separator "/" at position 8
+        if (studentId.charAt(8) != '/') {
+            return "Student ID must have '/' after the 4 digits (format: UGR/XXXX/YY)";
+        }
+        
+        // Check 2 digits for year (positions 9-10)
+        for (int i = 9; i < 11; i++) {
+            char c = studentId.charAt(i);
+            if (c < '0' || c > '9') {
+                return "Student ID must end with 2 digits for year (format: UGR/XXXX/YY)";
+            }
+        }
+        
+        return null; // Valid
+    }
+    
     public Student registerStudent(String username, String password, String fullName, 
                                    String studentId, Gender gender, College college) {
         Student student = new Student(
@@ -244,5 +318,22 @@ public class DatabaseDormService {
     
     public List<Message> getMessagesForUser(String username) {
         return messageRepository.findByUser(username);
+    }
+    
+    public void markMessageAsRead(Message message, boolean read) {
+        message.setRead(read);
+        messageRepository.update(message);
+    }
+    
+    /**
+     * Find a student by their username
+     */
+    public Optional<Student> findStudentByUsername(String username) {
+        for (Student s : studentRepository.findAll()) {
+            if (s.getUsername().equals(username)) {
+                return Optional.of(s);
+            }
+        }
+        return Optional.empty();
     }
 }
