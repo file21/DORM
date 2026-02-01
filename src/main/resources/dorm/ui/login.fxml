@@ -3,85 +3,62 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 
 <StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="dorm.ui.controller.LoginController"
            styleClass="login-container" stylesheets="@styles.css">
 
-    <VBox alignment="CENTER" spacing="20" styleClass="login-card" maxWidth="450">
+    <VBox alignment="CENTER" spacing="30" styleClass="login-card" maxWidth="400">
         
-        <!-- Title -->
-        <Label text="Dormitory Management" styleClass="login-title"/>
-        <Label text="Student Housing System" styleClass="info-label"/>
-        
-        <Separator/>
+        <!-- Header -->
+        <VBox alignment="CENTER" spacing="8">
+            <Label text="DORM" styleClass="login-logo"/>
+            <Label text="Student Housing Portal" styleClass="login-subtitle"/>
+        </VBox>
         
         <!-- Tab Pane for Login/Register -->
-        <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE">
+        <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" styleClass="login-tabs">
             
             <!-- Login Tab -->
-            <Tab text="Login">
-                <VBox spacing="15" styleClass="form-container">
+            <Tab text="Sign In">
+                <VBox spacing="20" styleClass="login-form">
                     
-                    <VBox spacing="5">
-                        <Label text="Student ID / Username" styleClass="form-label"/>
-                        <TextField fx:id="loginUsernameField" promptText="e.g., UGR/1234/16"/>
+                    <VBox spacing="8">
+                        <TextField fx:id="loginUsernameField" promptText="Student ID (e.g., UGR/1234/16)" styleClass="login-field"/>
+                        <PasswordField fx:id="loginPasswordField" promptText="Password" styleClass="login-field"/>
                     </VBox>
                     
-                    <VBox spacing="5">
-                        <Label text="Password" styleClass="form-label"/>
-                        <PasswordField fx:id="loginPasswordField" promptText="Enter password"/>
-                    </VBox>
+                    <Button text="Sign In" onAction="#onLogin" maxWidth="Infinity" styleClass="login-button"/>
                     
-                    <Button text="Login" onAction="#onLogin" maxWidth="Infinity" styleClass="button"/>
-                    
-                    <Label fx:id="loginStatusLabel" styleClass="info-label" textFill="red"/>
+                    <Label fx:id="loginStatusLabel" styleClass="login-status"/>
                     
                 </VBox>
             </Tab>
             
             <!-- Register Tab -->
             <Tab text="Register">
-                <ScrollPane fitToWidth="true" fitToHeight="true">
-                    <VBox spacing="15" styleClass="form-container">
+                <ScrollPane fitToWidth="true" styleClass="login-scroll">
+                    <VBox spacing="16" styleClass="login-form">
                         
-                        <VBox spacing="5">
-                            <Label text="Full Name" styleClass="form-label"/>
-                            <TextField fx:id="registerNameField" promptText="Enter your full name"/>
+                        <TextField fx:id="registerNameField" promptText="Full Name" styleClass="login-field"/>
+                        
+                        <VBox spacing="4">
+                            <TextField fx:id="registerStudentIdField" promptText="Student ID (UGR/XXXX/YY)" styleClass="login-field"/>
+                            <Label text="This will be your username" styleClass="field-hint"/>
                         </VBox>
                         
-                        <VBox spacing="5">
-                            <Label text="Student ID (will be your username)" styleClass="form-label"/>
-                            <TextField fx:id="registerStudentIdField" promptText="UGR/XXXX/YY"/>
-                            <Label text="Format: UGR/1234/16" styleClass="info-label"/>
-                        </VBox>
-                        
-                        <HBox spacing="15">
-                            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                                <Label text="Gender" styleClass="form-label"/>
-                                <ComboBox fx:id="registerGenderBox" maxWidth="Infinity"/>
-                            </VBox>
-                            
-                            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                                <Label text="College" styleClass="form-label"/>
-                                <ComboBox fx:id="registerCollegeBox" maxWidth="Infinity"/>
-                            </VBox>
+                        <HBox spacing="12">
+                            <ComboBox fx:id="registerGenderBox" promptText="Gender" HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="login-combo"/>
+                            <ComboBox fx:id="registerCollegeBox" promptText="College" HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="login-combo"/>
                         </HBox>
                         
-                        <VBox spacing="5">
-                            <Label text="Password (min 8 characters)" styleClass="form-label"/>
-                            <PasswordField fx:id="registerPasswordField" promptText="Create a password"/>
-                        </VBox>
+                        <PasswordField fx:id="registerPasswordField" promptText="Password (min 8 characters)" styleClass="login-field"/>
                         
-                        <VBox spacing="5">
-                            <Label text="Confirm Password" styleClass="form-label"/>
-                            <PasswordField fx:id="registerConfirmPasswordField" promptText="Confirm password"/>
-                        </VBox>
+                        <PasswordField fx:id="registerConfirmPasswordField" promptText="Confirm Password" styleClass="login-field"/>
                         
-                        <Button text="Create Account" onAction="#onRegister" maxWidth="Infinity" styleClass="button-success"/>
+                        <Button text="Create Account" onAction="#onRegister" maxWidth="Infinity" styleClass="login-button"/>
                         
-                        <Label fx:id="registerStatusLabel" styleClass="info-label" textFill="red"/>
+                        <Label fx:id="registerStatusLabel" styleClass="login-status"/>
                         
                     </VBox>
                 </ScrollPane>

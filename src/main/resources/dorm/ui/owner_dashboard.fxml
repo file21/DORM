@@ -33,16 +33,19 @@
                         
                         <HBox spacing="10" alignment="CENTER_LEFT">
                             <Label text="Gender:"/>
-                            <ComboBox fx:id="filterGender" prefWidth="120"/>
+                            <ComboBox fx:id="filterGender" prefWidth="100"/>
                             
                             <Label text="Residency:"/>
-                            <ComboBox fx:id="filterResidency" prefWidth="130"/>
+                            <ComboBox fx:id="filterResidency" prefWidth="120"/>
                             
                             <Label text="Subcity:"/>
-                            <ComboBox fx:id="filterSubcity" prefWidth="130" editable="true"/>
+                            <ComboBox fx:id="filterSubcity" prefWidth="120" editable="true"/>
+                            
+                            <Label text="Woreda:"/>
+                            <ComboBox fx:id="filterWoreda" prefWidth="100" editable="true"/>
                             
                             <Label text="College:"/>
-                            <ComboBox fx:id="filterCollege" prefWidth="100"/>
+                            <ComboBox fx:id="filterCollege" prefWidth="80"/>
                         </HBox>
                         
                         <HBox spacing="10" alignment="CENTER_LEFT">
@@ -61,15 +64,18 @@
                     <!-- Applications Table -->
                     <TableView fx:id="applicationTable" VBox.vgrow="ALWAYS">
                         <columns>
-                            <TableColumn fx:id="selectColumn" text="Select" prefWidth="50"/>
-                            <TableColumn fx:id="nameColumn" text="Name" prefWidth="120"/>
-                            <TableColumn fx:id="studentIdColumn" text="Student ID" prefWidth="100"/>
-                            <TableColumn fx:id="genderColumn" text="Gender" prefWidth="70"/>
-                            <TableColumn fx:id="collegeColumn" text="College" prefWidth="80"/>
-                            <TableColumn fx:id="residencyColumn" text="Residency" prefWidth="100"/>
-                            <TableColumn fx:id="sponsorshipColumn" text="Sponsorship" prefWidth="110"/>
-                            <TableColumn fx:id="statusColumn" text="Status" prefWidth="140"/>
-                            <TableColumn fx:id="buildingColumn" text="Building" prefWidth="90"/>
+                            <TableColumn fx:id="selectColumn" text="Select" minWidth="50" maxWidth="60"/>
+                            <TableColumn fx:id="nameColumn" text="Name" minWidth="100"/>
+                            <TableColumn fx:id="studentIdColumn" text="Student ID" minWidth="100"/>
+                            <TableColumn fx:id="genderColumn" text="Gender" minWidth="60"/>
+                            <TableColumn fx:id="collegeColumn" text="College" minWidth="60"/>
+                            <TableColumn fx:id="residencyColumn" text="Residency" minWidth="90"/>
+                            <TableColumn fx:id="subcityColumn" text="Subcity" minWidth="100"/>
+                            <TableColumn fx:id="woredaColumn" text="Woreda" minWidth="60"/>
+                            <TableColumn fx:id="sponsorshipColumn" text="Sponsorship" minWidth="100"/>
+                            <TableColumn fx:id="transactionIdColumn" text="Transaction ID" minWidth="100"/>
+                            <TableColumn fx:id="statusColumn" text="Status" minWidth="120"/>
+                            <TableColumn fx:id="buildingColumn" text="Building" minWidth="80"/>
                         </columns>
                     </TableView>
                     
@@ -99,9 +105,9 @@
                     <!-- Staff Table -->
                     <TableView fx:id="staffTable" VBox.vgrow="ALWAYS">
                         <columns>
-                            <TableColumn fx:id="staffNameColumn" text="Name" prefWidth="200"/>
-                            <TableColumn fx:id="staffUsernameColumn" text="Username" prefWidth="150"/>
-                            <TableColumn fx:id="staffRoleColumn" text="Role" prefWidth="100"/>
+                            <TableColumn fx:id="staffNameColumn" text="Name" minWidth="150"/>
+                            <TableColumn fx:id="staffUsernameColumn" text="Username" minWidth="150"/>
+                            <TableColumn fx:id="staffPasswordColumn" text="Password" minWidth="150"/>
                         </columns>
                     </TableView>
                     
